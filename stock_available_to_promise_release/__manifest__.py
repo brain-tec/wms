@@ -1,5 +1,5 @@
 # Copyright 2019 Camptocamp (https://www.camptocamp.com)
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html)
 
 {
     "name": "Stock Available to Promise Release",
@@ -7,6 +7,7 @@
     "summary": "Release Operations based on available to promise",
     "author": "Camptocamp,Odoo Community Association (OCA)",
     "category": "Stock Management",
+    "website": "https://github.com/OCA/wms",
     "depends": ["stock"],
     "data": [
         "views/product_product_views.xml",
@@ -18,7 +19,7 @@
         "wizards/stock_release_views.xml",
     ],
     "installable": False,
-    "license": "AGPL-3",
+    "license": "LGPL-3",
     "application": False,
     "development_status": "Alpha",
 }
