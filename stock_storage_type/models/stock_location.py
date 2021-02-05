@@ -78,6 +78,15 @@ class StockLocation(models.Model):
         help="technical field: the pending incoming "
         "stock.move.lines in the location",
     )
+    out_move_line_ids = fields.One2many(
+        "stock.move.line",
+        "location_id",
+        domain=[
+            ("state", "in", ("waiting", "confirmed", "partially_available", "assigned"))
+        ],
+        help="technical field: the pending outgoing "
+        "stock.move.lines in the location",
+    )
     location_will_contain_lot_ids = fields.Many2many(
         "stock.production.lot",
         store=True,
@@ -132,29 +141,66 @@ class StockLocation(models.Model):
             leaves = self.search([("id", "in", leave_ids)])
             loc.leaf_location_ids = leaves
 
-    @api.depends("quant_ids", "in_move_ids", "in_move_line_ids")
-    def _compute_location_will_contain_product_ids(self):
-        for rec in self:
-            rec.location_will_contain_product_ids = (
-                rec.mapped("quant_ids.product_id")
-                | rec.mapped("in_move_ids.product_id")
-                | rec.mapped("in_move_line_ids.product_id")
-            )
+    def _should_compute_will_contain_product_ids(self):
+        return self.usage == "internal" and any(
+            location.do_not_mix_products
+            for location in self.allowed_location_storage_type_ids
+        )
 
-    @api.depends("quant_ids", "in_move_line_ids")
-    def _compute_location_will_contain_lot_ids(self):
-        for rec in self:
-            rec.location_will_contain_lot_ids = rec.mapped(
-                "quant_ids.lot_id"
-            ) | rec.mapped("in_move_line_ids.lot_id")
+    def _should_compute_will_contain_lot_ids(self):
+        return self.usage == "internal" and any(
+            location.do_not_mix_lots
+            for location in self.allowed_location_storage_type_ids
+        )
 
     @api.depends(
-        "quant_ids.quantity", "in_move_ids", "in_move_line_ids",
+        "quant_ids",
+        "in_move_ids",
+        "in_move_line_ids",
+        "allowed_location_storage_type_ids.do_not_mix_products",
+    )
+    def _compute_location_will_contain_product_ids(self):
+        for rec in self:
+            products = self.env["product.product"].browse()
+            if rec._should_compute_will_contain_product_ids():
+                products = (
+                    rec.mapped("quant_ids.product_id")
+                    | rec.mapped("in_move_ids.product_id")
+                    | rec.mapped("in_move_line_ids.product_id")
+                )
+            rec.location_will_contain_product_ids = products
+
+    @api.depends(
+        "quant_ids",
+        "in_move_line_ids",
+        "allowed_location_storage_type_ids.do_not_mix_lots",
+    )
+    def _compute_location_will_contain_lot_ids(self):
+        for rec in self:
+            lots = self.env["stock.production.lot"].browse()
+            if rec._should_compute_will_contain_lot_ids():
+                lots = rec.mapped("quant_ids.lot_id") | rec.mapped(
+                    "in_move_line_ids.lot_id"
+                )
+            rec.location_will_contain_lot_ids = lots
+
+    @api.depends(
+        "quant_ids.quantity",
+        "out_move_line_ids.qty_done",
+        "in_move_ids",
+        "in_move_line_ids",
     )
     def _compute_location_is_empty(self):
         for rec in self:
+            if rec.usage != "internal":
+                # No restriction should apply on customer/supplier/...
+                # locations.
+                rec.location_is_empty = True
+                continue
             if (
                 sum(rec.quant_ids.mapped("quantity"))
+                - sum(rec.out_move_line_ids.mapped("qty_done"))
+                > 0
                 or rec.in_move_ids
                 or rec.in_move_line_ids
             ):
@@ -301,20 +347,53 @@ class StockLocation(models.Model):
                 ("max_height", "=", 0),
                 ("max_height", ">=", quants.package_id.height),
             ]
-        if quants.package_id.pack_weight:
+        package_weight = (
+            quants.package_id.pack_weight or quants.package_id.estimated_pack_weight
+        )
+        if package_weight:
             pertinent_loc_storagetype_domain += [
                 "|",
                 ("max_weight", "=", 0),
-                ("max_weight", ">=", quants.package_id.pack_weight),
+                ("max_weight", ">=", package_weight),
             ]
         _logger.debug(
             "pertinent storage type domain: %s", pertinent_loc_storagetype_domain
         )
         return pertinent_loc_storagetype_domain
 
+    def _allowed_locations_for_location_storage_types(
+        self, location_storage_types, quants, products
+    ):
+        valid_location_ids = set()
+        for loc_storage_type in location_storage_types:
+            location_domain = loc_storage_type._domain_location_storage_type(
+                self, quants, products
+            )
+            _logger.debug("pertinent location domain: %s", location_domain)
+            locations = self.search(location_domain)
+            valid_location_ids |= set(locations.ids)
+        return self.browse(valid_location_ids)
+
+    def _select_final_valid_putaway_locations(self, limit=None):
+        """Return the valid locations using the provided limit
+
+        ``self`` contains locations already ordered and contains
+        only valid locations.
+        This method can be used as a hook to add or remove valid
+        locations based on other properties. Pay attention to
+        keep the order.
+        """
+        return self[:limit]
+
     def select_allowed_locations(
         self, package_storage_type, quants, products, limit=None
     ):
+        """Filter allowed locations for a storage type
+
+        ``self`` contains locations already ordered according to the
+        putaway strategy, so beware of the return that must keep the
+        same order
+        """
         # We have package who may be placed in a stock.location
         #
         # 1. On the stock.location there are location_storage_type and on the
@@ -350,19 +429,19 @@ class StockLocation(models.Model):
 
         # now loop over the pertinent location storage types (there should be
         # few of them) and check for properties to find suitable locations
-        valid_location_ids = set()
-        for loc_storage_type in pertinent_loc_storage_types:
-            location_domain = loc_storage_type._domain_location_storage_type(
-                compatible_locations, quants, products
-            )
-            _logger.debug("pertinent location domain: %s", location_domain)
-            locations = self.search(location_domain)
-            valid_location_ids |= set(locations.ids)
+        valid_locations = compatible_locations._allowed_locations_for_location_storage_types(  # noqa
+            pertinent_loc_storage_types, quants, products
+        )
 
         # NOTE: self.ids is ordered as expected, so we want to filter the valid
         # locations while preserving the initial order
-        valid_location_ids = [id_ for id_ in self.ids if id_ in valid_location_ids]
-        valid_locations = self.browse(valid_location_ids)[:limit]
+        valid_location_ids = set(valid_locations.ids)
+        valid_locations = self.browse(
+            id_ for id_ in self.ids if id_ in valid_location_ids
+        )
+        valid_locations = valid_locations._select_final_valid_putaway_locations(
+            limit=limit
+        )
 
         _logger.debug(
             "select allowed location for package storage"
