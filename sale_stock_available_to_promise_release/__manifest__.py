@@ -3,9 +3,10 @@
 
 {
     "name": "Stock Available to Promise Release - Sale Integration",
-    "version": "13.0.1.4.1",
+    "version": "13.0.1.5.0",
     "summary": "Integration between Sales and Available to Promise Release",
     "author": "Camptocamp,Odoo Community Association (OCA)",
+    "website": "https://github.com/OCA/wms",
     "category": "Stock Management",
     "depends": ["sale_stock", "stock_available_to_promise_release", "delivery"],
     "data": [

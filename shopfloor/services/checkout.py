@@ -84,8 +84,11 @@ class Checkout(Component):
         )
 
     def _data_for_packing_info(self, picking):
-        if picking.picking_type_id.shopfloor_display_packing_info:
-            return picking.shopfloor_packing_info or ""
+        """Return the packing information
+
+        Intended to be extended.
+        """
+        # TODO: This could be avoided if included in the picking parser.
         return ""
 
     def _response_for_select_dest_package(self, picking, move_lines, message=None):
@@ -731,8 +734,19 @@ class Checkout(Component):
         if package:
             return self._put_lines_in_package(picking, selected_lines, package)
 
+        # Scan delivery packaging
         packaging = search.generic_packaging_from_scan(barcode)
         if packaging:
+            carrier = picking.carrier_id
+            # Validate against carrier
+            if carrier and not self._packaging_good_for_carrier(packaging, carrier):
+                return self._response_for_select_package(
+                    picking,
+                    selected_lines,
+                    message=self.msg_store.packaging_invalid_for_carrier(
+                        packaging, carrier
+                    ),
+                )
             return self._create_and_assign_new_packaging(
                 picking, selected_lines, packaging
             )
@@ -740,6 +754,9 @@ class Checkout(Component):
         return self._response_for_select_package(
             picking, selected_lines, message=self.msg_store.barcode_not_found()
         )
+
+    def _packaging_good_for_carrier(self, packaging, carrier):
+        return packaging.package_carrier_type in ("none", carrier.delivery_type)
 
     def new_package(self, picking_id, selected_line_ids):
         """Add all selected lines in a new package
