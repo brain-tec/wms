@@ -10,6 +10,7 @@ setuptools.setup(
     install_requires=[
         'odoo13-addon-delivery_carrier_preference',
         'odoo13-addon-delivery_carrier_warehouse',
+        'odoo13-addon-delivery_preference_glue_stock_picking_group',
         'odoo13-addon-sale_stock_available_to_promise_release',
         'odoo13-addon-shopfloor',
         'odoo13-addon-shopfloor_batch_automatic_creation',
@@ -17,6 +18,7 @@ setuptools.setup(
         'odoo13-addon-shopfloor_mobile',
         'odoo13-addon-shopfloor_mobile_custom_example',
         'odoo13-addon-shopfloor_packing_info',
+        'odoo13-addon-shopfloor_workstation',
         'odoo13-addon-stock_available_to_promise_release',
         'odoo13-addon-stock_available_to_promise_release_dynamic_routing',
         'odoo13-addon-stock_checkout_sync',
