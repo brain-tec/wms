@@ -7,9 +7,9 @@ Stock Storage Type ABC Strategy
    !! changes will be overwritten.                   !!
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. |badge1| image:: https://img.shields.io/badge/maturity-Alpha-red.png
+.. |badge1| image:: https://img.shields.io/badge/maturity-Beta-yellow.png
     :target: https://odoo-community.org/page/development-status
-    :alt: Alpha
+    :alt: Beta
 .. |badge2| image:: https://img.shields.io/badge/licence-AGPL--3-blue.png
     :target: http://www.gnu.org/licenses/agpl-3.0-standalone.html
     :alt: License: AGPL-3
@@ -28,10 +28,20 @@ Stock Storage Type ABC Strategy
 This module implements chaotic storage 'ABC' according to Package Storage Type
 and Location Storage Type.
 
-.. IMPORTANT::
-   This is an alpha version, the data model and design can change at any time without warning.
-   Only for development or testing purpose, do not use in production.
-   `More details on development status <https://odoo-community.org/page/development-status>`_
+The locations and products get an 'a', 'b' or 'c' storage (by default 'b').
+
+For the computation of the putaway, the locations are sorted first by max
+height which is a physical constraint to respect, then by 'ABC' as following:
+
+* if the product is 'a', then locations are sorted by 'a', 'b', 'c'
+* if the product is 'b', then locations are sorted by 'b', 'c', 'a'
+* if the product is 'c', then locations are sorted by 'c', 'b', 'a'
+
+Then by pack putaway sequence (this allow to favor for example some level or
+corridor), and finally randomly.
+
+The storage type putaway computation will then apply on the list of locations
+the additional restrictions and take the first valid location.
 
 **Table of contents**
 
@@ -55,11 +65,13 @@ Authors
 ~~~~~~~
 
 * Camptocamp
+* BCIM
 
 Contributors
 ~~~~~~~~~~~~
 
 * Akim Juillerat <akim.juillerat@camptocamp.com>
+* Jacques-Etienne Baudoux <je@bcim.be>
 
 Maintainers
 ~~~~~~~~~~~
