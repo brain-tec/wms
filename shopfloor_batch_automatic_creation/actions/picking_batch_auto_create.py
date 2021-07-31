@@ -21,14 +21,34 @@ class PickingBatchAutoCreateAction(Component):
 
     _advisory_lock_name = "shopfloor_batch_picking_create"
 
-    def create_batch(self, picking_types, max_pickings=0, max_weight=0, max_volume=0):
+    def create_batch(
+        self,
+        picking_types,
+        max_pickings=0,
+        max_weight=0,
+        max_volume=0,
+        group_by_commercial_partner=False,
+    ):
         self._lock()
-        pickings = self._search_pickings(picking_types, user=self.env.user)
+        search_user = self.env.user
+        pickings = self._search_pickings(picking_types, user=search_user)
         if not pickings:
+            search_user = None
             pickings = self._search_pickings(picking_types)
-
         pickings = self._sort(pickings)
-        pickings = self._apply_limits(pickings, max_pickings, max_weight, max_volume)
+        if group_by_commercial_partner:
+            # From the first operation we got, get all operations having the
+            # same commercial entity
+            picking = fields.first(pickings)
+            commercial_partner = picking.partner_id.commercial_partner_id
+            pickings = self._search_pickings(
+                picking_types, user=search_user, commercial_partner=commercial_partner
+            )
+        else:
+            # Otherwise process by priorities by applying the limits
+            pickings = self._apply_limits(
+                pickings, max_pickings, max_weight, max_volume
+            )
         if not pickings:
             return self.env["stock.picking.batch"].browse()
         return self._create_batch(pickings)
@@ -62,21 +82,29 @@ class PickingBatchAutoCreateAction(Component):
             "lock acquired to create a picking batch (%s)", self.env.user.login
         )
 
-    def _search_pickings_domain(self, picking_types, user=None):
+    def _search_pickings_domain(
+        self, picking_types, user=None, commercial_partner=None
+    ):
         domain = [
             ("picking_type_id", "in", picking_types.ids),
             ("state", "in", ("assigned", "partially_available")),
             ("batch_id", "=", False),
             ("user_id", "=", user.id if user else False),
         ]
+        if commercial_partner:
+            domain.append(
+                ("partner_id.commercial_partner_id", "=", commercial_partner.id)
+            )
         return domain
 
-    def _search_pickings(self, picking_types, user=None):
+    def _search_pickings(self, picking_types, user=None, commercial_partner=None):
         # We can't use a limit in the SQL search because the 'priority' fields
         # is sometimes empty (it seems the inverse StockPicking.priority field
         # mess up with default on stock.move), we have to sort in Python.
         return self.env["stock.picking"].search(
-            self._search_pickings_domain(picking_types, user=user)
+            self._search_pickings_domain(
+                picking_types, user=user, commercial_partner=commercial_partner
+            )
         )
 
     def _sort(self, pickings):
@@ -98,8 +126,12 @@ class PickingBatchAutoCreateAction(Component):
         )
 
     def _apply_limits(self, pickings, max_pickings, max_weight, max_volume):
-        current_priority = fields.first(pickings).priority or "1"
-        selected_pickings = self.env["stock.picking"].browse()
+        first_picking = fields.first(pickings)
+        current_priority = first_picking.priority or "1"
+        # Always take the first picking even if it doesn't fullfill the
+        # weight/volume criteria. This allows to always process at least
+        # one picking which won't be processed otherwise
+        selected_pickings = first_picking
 
         precision_weight = self._precision_weight()
         precision_volume = self._precision_volume()
@@ -108,9 +140,12 @@ class PickingBatchAutoCreateAction(Component):
             """Return True if value1 is greater than value2"""
             return tools.float_compare(value1, value2, precision_digits=digits) == 1
 
-        total_weight = 0.0
-        total_volume = 0.0
-        for picking in pickings:
+        total_weight = self._picking_weight(first_picking)
+        total_volume = self._picking_volume(first_picking)
+        for picking in pickings[1:]:
+            if max_pickings and len(selected_pickings) == max_pickings:
+                # selected enough!
+                break
             if (picking.priority or "1") != current_priority:
                 # as we sort by priority, exit as soon as the priority changes,
                 # we do not mix priorities to make delivery of high priority
@@ -128,10 +163,6 @@ class PickingBatchAutoCreateAction(Component):
             selected_pickings |= picking
             total_weight += weight
             total_volume += volume
-
-            if max_pickings and len(selected_pickings) == max_pickings:
-                # selected enough!
-                break
 
         return selected_pickings
 

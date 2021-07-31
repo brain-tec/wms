@@ -1,5 +1,5 @@
-import os
-import unittest
+# Copyright 2020 Camptocamp
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
 from odoo.addons.shopfloor.tests.common import CommonCase
 
@@ -10,8 +10,8 @@ class TestBatchCreate(CommonCase):
         super().setUpClassVars(*args, **kwargs)
         cls.menu = cls.env.ref("shopfloor.shopfloor_menu_cluster_picking")
         cls.profile = cls.env.ref("shopfloor.shopfloor_profile_shelf_1_demo")
-        cls.wh = cls.profile.warehouse_id
         cls.picking_type = cls.menu.picking_type_ids
+        cls.wh = cls.picking_type.warehouse_id
 
     @classmethod
     def setUpClassBaseData(cls, *args, **kwargs):
@@ -64,9 +64,6 @@ class TestBatchCreate(CommonCase):
         # when we have users on pickings, we select only those for the batch
         self.assertEqual(batch.picking_ids, self.picking2 + self.picking3)
 
-    @unittest.skipIf(
-        os.getenv("TRAVIS"), "failing test only on travis, need to be investigated"
-    )
     def test_create_batch_max_weight(self):
         # each picking has 2 lines of 10 units, set weight of 1kg per unit,
         # we'll have a total weight of 20kg per picking
@@ -77,11 +74,30 @@ class TestBatchCreate(CommonCase):
         self.product_c.weight = 2
         self.product_d.weight = 2
 
-        # with a max weight of 20, we can take the first picking, but the
+        # with a max weight of 40, we can take the first picking, but the
         # second one would exceed the max, the third can be added because it's
         # still in the limit
         batch = self.auto_batch.create_batch(self.picking_type, max_weight=40)
         self.assertEqual(batch.picking_ids, self.picking1 + self.picking3)
+
+    def test_create_batch_max_weight_all_exceed(self):
+        """Test batch creation with all pickings exceeding the max weight.
+
+        In such case the batch is anyway created with the first picking in it
+        because it's ok to have one picking exceeding the max weight (otherwise
+        those pickings will never be processed).
+        """
+        # each picking has 2 lines of 10 units, set weight of 1kg per unit,
+        # we'll have a total weight of 20kg per picking
+        self.product_a.weight = 1
+        self.product_b.weight = 1
+        self.product_c.weight = 1
+        self.product_d.weight = 1
+
+        # with a max weight of 10, we can normally take no picking, but as we
+        # need to process them we take at least the first one.
+        batch = self.auto_batch.create_batch(self.picking_type, max_weight=10)
+        self.assertEqual(batch.picking_ids, self.picking1)
 
     def test_create_batch_max_volume(self):
         # each picking has 2 lines of 10 units, set volume of 0.1m3 per unit,
@@ -98,6 +114,25 @@ class TestBatchCreate(CommonCase):
         # still in the limit
         batch = self.auto_batch.create_batch(self.picking_type, max_volume=4)
         self.assertEqual(batch.picking_ids, self.picking1 + self.picking3)
+
+    def test_create_batch_max_volume_all_exceed(self):
+        """Test batch creation with all pickings exceeding the max volume.
+
+        In such case the batch is anyway created with the first picking in it
+        because it's ok to have one picking exceeding the max volume (otherwise
+        those pickings will never be processed).
+        """
+        # each picking has 2 lines of 10 units, set volume of 0.1m3 per unit,
+        # we'll have a total volume of 2m3 per picking
+        self.product_a.volume = 0.1
+        self.product_b.volume = 0.1
+        self.product_c.volume = 0.1
+        self.product_d.volume = 0.1
+
+        # with a max volume of 1, we can normally take no picking, but as we
+        # need to process them we take at least the first one.
+        batch = self.auto_batch.create_batch(self.picking_type, max_volume=1)
+        self.assertEqual(batch.picking_ids, self.picking1)
 
     def test_volume(self):
         # varying volumes because of the packing
@@ -156,3 +191,36 @@ class TestBatchCreate(CommonCase):
             next_state="confirm_start",
             data=data,
         )
+
+    def test_create_batch_group_by_commercial_partner(self):
+        """Test batch creation by grouping all operations of the same
+        commercial entity, ignoring priorities and limits.
+        """
+        partner_model = self.env["res.partner"].sudo()
+        partner1_com = partner_model.create(
+            {"name": "COM PARTNER 1", "is_company": True}
+        )
+        partner1_contact = partner_model.create(
+            {
+                "name": "CONTACT PARTNER 1",
+                "parent_id": partner1_com.id,
+                "is_company": False,
+            }
+        )
+        partner2_com = partner_model.create(
+            {"name": "COM PARTNER 2", "is_company": True}
+        )
+        partner2_contact = partner_model.create(
+            {
+                "name": "CONTACT PARTNER 2",
+                "parent_id": partner2_com.id,
+                "is_company": False,
+            }
+        )
+        self.picking1.write({"priority": "2", "partner_id": partner1_contact.id})
+        self.picking2.write({"priority": "2", "partner_id": partner2_contact.id})
+        self.picking3.write({"priority": "3", "partner_id": partner2_contact.id})
+        batch = self.auto_batch.create_batch(
+            self.picking_type, group_by_commercial_partner=True
+        )
+        self.assertEqual(batch.picking_ids, self.picking2 | self.picking3)
