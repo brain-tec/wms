@@ -112,10 +112,11 @@ addon | version | summary
 [delivery_carrier_warehouse](delivery_carrier_warehouse/) | 13.0.1.2.0 | Get delivery method used in sales orders from warehouse
 [delivery_preference_glue_stock_picking_group](delivery_preference_glue_stock_picking_group/) | 13.0.1.0.0 | Fix Delivery preferences module on grouping picking
 [sale_stock_available_to_promise_release](sale_stock_available_to_promise_release/) | 13.0.1.6.0 | Integration between Sales and Available to Promise Release
-[shopfloor](shopfloor/) | 13.0.4.10.2 | manage warehouse operations with barcode scanners
+[shopfloor](shopfloor/) | 13.0.4.11.0 | manage warehouse operations with barcode scanners
 [shopfloor_base](shopfloor_base/) | 13.0.1.1.0 | Core module for creating mobile apps
 [shopfloor_batch_automatic_creation](shopfloor_batch_automatic_creation/) | 13.0.1.1.0 | Create batch transfers for Cluster Picking
 [shopfloor_checkout_sync](shopfloor_checkout_sync/) | 13.0.1.0.0 | Glue module
+[shopfloor_delivery_shipment](shopfloor_delivery_shipment/) | 13.0.1.1.0 | Manage delivery process with shipment advices
 [shopfloor_example](shopfloor_example/) | 13.0.1.0.1 | Show how to customize the Shopfloor app frontend.
 [shopfloor_mobile](shopfloor_mobile/) | 13.0.2.4.1 | Mobile frontend for WMS Shopfloor app
 [shopfloor_mobile_base](shopfloor_mobile_base/) | 13.0.1.11.1 | Mobile frontend for WMS Shopfloor app
@@ -135,7 +136,7 @@ addon | version | summary
 [stock_picking_type_shipping_policy_group_by](stock_picking_type_shipping_policy_group_by/) | 13.0.1.0.0 | Glue module for Picking Type Shipping Policy and Group Transfers by Partner and Carrier
 [stock_reception_screen](stock_reception_screen/) | 13.0.1.6.2 | Dedicated screen to receive/scan goods.
 [stock_reception_screen_measuring_device](stock_reception_screen_measuring_device/) | 13.0.1.0.1 | Allow to use a measuring device from a reception screen.for packaging measurement
-[stock_reception_screen_mrp_subcontracting](stock_reception_screen_mrp_subcontracting/) | 13.0.1.0.0 | Reception screen integrated with subcontracted productions.
+[stock_reception_screen_mrp_subcontracting](stock_reception_screen_mrp_subcontracting/) | 13.0.1.0.1 | Reception screen integrated with subcontracted productions.
 [stock_reception_screen_qty_by_packaging](stock_reception_screen_qty_by_packaging/) | 13.0.1.0.0 | Glue module for `stock_product_qty_by_packaging` and `stock_vertical_lift`.
 [stock_storage_type](stock_storage_type/) | 13.0.1.14.1 | Manage packages and locations storage types
 [stock_storage_type_buffer](stock_storage_type_buffer/) | 13.0.1.3.0 | Exclude storage locations from put-away if their buffer is full
