@@ -127,6 +127,7 @@ addon | version | maintainers | summary
 [sale_stock_available_to_promise_release](sale_stock_available_to_promise_release/) | 14.0.1.0.0 |  | Integration between Sales and Available to Promise Release
 [shopfloor](shopfloor/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | manage warehouse operations with barcode scanners
 [shopfloor_base](shopfloor_base/) | 14.0.1.0.1 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Core module for creating mobile apps
+[shopfloor_batch_automatic_creation](shopfloor_batch_automatic_creation/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) | Create batch transfers for Cluster Picking
 [shopfloor_checkout_sync](shopfloor_checkout_sync/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) | Glue module
 [shopfloor_example](shopfloor_example/) | 14.0.1.0.0 |  | Show how to customize the Shopfloor app frontend.
 [shopfloor_mobile](shopfloor_mobile/) | 14.0.1.0.1 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Mobile frontend for WMS Shopfloor app
@@ -146,16 +147,9 @@ addon | version | maintainers | summary
 [stock_picking_type_shipping_policy](stock_picking_type_shipping_policy/) | 14.0.1.0.0 |  | Define different shipping policies according to picking type
 [stock_picking_type_shipping_policy_group_by](stock_picking_type_shipping_policy_group_by/) | 14.0.1.0.0 |  | Glue module for Picking Type Shipping Policy and Group Transfers by Partner and Carrier
 [stock_reception_screen](stock_reception_screen/) | 14.0.1.0.0 |  | Dedicated screen to receive/scan goods.
-[stock_storage_type](stock_storage_type/) | 14.0.1.8.0 |  | Manage packages and locations storage types
+[stock_storage_type](stock_storage_type/) | 14.0.1.8.1 |  | Manage packages and locations storage types
 [stock_storage_type_buffer](stock_storage_type_buffer/) | 14.0.1.3.0 |  | Exclude storage locations from put-away if their buffer is full
 [stock_storage_type_putaway_abc](stock_storage_type_putaway_abc/) | 14.0.1.0.0 |  | Advanced storage strategy ABC for WMS
-
-
-Unported addons
----------------
-addon | version | maintainers | summary
---- | --- | --- | ---
-[shopfloor_batch_automatic_creation](shopfloor_batch_automatic_creation/) | 13.0.1.0.0 (unported) | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) | Create batch transfers for Cluster Picking
 
 [//]: # (end addons)
 
