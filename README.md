@@ -122,7 +122,7 @@ Available addons
 ----------------
 addon | version | maintainers | summary
 --- | --- | --- | ---
-[delivery_carrier_preference](delivery_carrier_preference/) | 14.0.1.0.0 |  | Advanced selection of preferred shipping methods
+[delivery_carrier_preference](delivery_carrier_preference/) | 14.0.1.0.1 |  | Advanced selection of preferred shipping methods
 [delivery_carrier_warehouse](delivery_carrier_warehouse/) | 14.0.1.2.0 |  | Get delivery method used in sales orders from warehouse
 [sale_stock_available_to_promise_release](sale_stock_available_to_promise_release/) | 14.0.1.0.0 |  | Integration between Sales and Available to Promise Release
 [shopfloor](shopfloor/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | manage warehouse operations with barcode scanners
@@ -139,6 +139,7 @@ addon | version | maintainers | summary
 [stock_available_to_promise_release_dynamic_routing](stock_available_to_promise_release_dynamic_routing/) | 14.0.1.0.0 |  | Glue between moves release and dynamic routing
 [stock_checkout_sync](stock_checkout_sync/) | 14.0.1.0.0 |  | Sync location for Checkout operations
 [stock_dynamic_routing](stock_dynamic_routing/) | 14.0.1.0.0 |  | Dynamic routing of stock moves
+[stock_dynamic_routing_checkout_sync](stock_dynamic_routing_checkout_sync/) | 14.0.1.0.0 |  | Glue module for tests when dynamic routing and checkout sync are used
 [stock_dynamic_routing_reserve_rule](stock_dynamic_routing_reserve_rule/) | 14.0.1.0.0 |  | Glue module between dynamic routing and reservation rules
 [stock_move_source_relocate](stock_move_source_relocate/) | 14.0.1.0.0 |  | Change source location of unavailable moves
 [stock_move_source_relocate_dynamic_routing](stock_move_source_relocate_dynamic_routing/) | 14.0.1.0.0 |  | Glue module
