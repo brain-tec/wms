@@ -10,6 +10,7 @@ setuptools.setup(
     install_requires=[
         'odoo14-addon-delivery_carrier_preference',
         'odoo14-addon-delivery_carrier_warehouse',
+        'odoo14-addon-delivery_preference_glue_stock_picking_group',
         'odoo14-addon-sale_stock_available_to_promise_release',
         'odoo14-addon-shopfloor',
         'odoo14-addon-shopfloor_base',
@@ -34,6 +35,8 @@ setuptools.setup(
         'odoo14-addon-stock_picking_type_shipping_policy',
         'odoo14-addon-stock_picking_type_shipping_policy_group_by',
         'odoo14-addon-stock_reception_screen',
+        'odoo14-addon-stock_reception_screen_measuring_device',
+        'odoo14-addon-stock_reception_screen_qty_by_packaging',
         'odoo14-addon-stock_storage_type',
         'odoo14-addon-stock_storage_type_buffer',
         'odoo14-addon-stock_storage_type_putaway_abc',

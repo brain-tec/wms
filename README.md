@@ -124,6 +124,7 @@ addon | version | maintainers | summary
 --- | --- | --- | ---
 [delivery_carrier_preference](delivery_carrier_preference/) | 14.0.1.0.1 |  | Advanced selection of preferred shipping methods
 [delivery_carrier_warehouse](delivery_carrier_warehouse/) | 14.0.1.2.0 |  | Get delivery method used in sales orders from warehouse
+[delivery_preference_glue_stock_picking_group](delivery_preference_glue_stock_picking_group/) | 14.0.1.0.0 |  | Fix Delivery preferences module on grouping picking
 [sale_stock_available_to_promise_release](sale_stock_available_to_promise_release/) | 14.0.1.0.0 |  | Integration between Sales and Available to Promise Release
 [shopfloor](shopfloor/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | manage warehouse operations with barcode scanners
 [shopfloor_base](shopfloor_base/) | 14.0.1.0.1 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Core module for creating mobile apps
@@ -148,6 +149,8 @@ addon | version | maintainers | summary
 [stock_picking_type_shipping_policy](stock_picking_type_shipping_policy/) | 14.0.1.0.0 |  | Define different shipping policies according to picking type
 [stock_picking_type_shipping_policy_group_by](stock_picking_type_shipping_policy_group_by/) | 14.0.1.0.0 |  | Glue module for Picking Type Shipping Policy and Group Transfers by Partner and Carrier
 [stock_reception_screen](stock_reception_screen/) | 14.0.1.0.0 |  | Dedicated screen to receive/scan goods.
+[stock_reception_screen_measuring_device](stock_reception_screen_measuring_device/) | 14.0.1.0.0 | [![gurneyalex](https://github.com/gurneyalex.png?size=30px)](https://github.com/gurneyalex) | Allow to use a measuring device from a reception screen.for packaging measurement
+[stock_reception_screen_qty_by_packaging](stock_reception_screen_qty_by_packaging/) | 14.0.1.0.0 |  | Glue module for `stock_product_qty_by_packaging` and `stock_vertical_lift`.
 [stock_storage_type](stock_storage_type/) | 14.0.1.8.2 |  | Manage packages and locations storage types
 [stock_storage_type_buffer](stock_storage_type_buffer/) | 14.0.1.3.0 |  | Exclude storage locations from put-away if their buffer is full
 [stock_storage_type_putaway_abc](stock_storage_type_putaway_abc/) | 14.0.1.0.0 |  | Advanced storage strategy ABC for WMS
