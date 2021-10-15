@@ -127,12 +127,12 @@ addon | version | maintainers | summary
 [delivery_preference_glue_stock_picking_group](delivery_preference_glue_stock_picking_group/) | 14.0.1.0.0 |  | Fix Delivery preferences module on grouping picking
 [sale_stock_available_to_promise_release](sale_stock_available_to_promise_release/) | 14.0.1.0.0 |  | Integration between Sales and Available to Promise Release
 [shopfloor](shopfloor/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | manage warehouse operations with barcode scanners
-[shopfloor_base](shopfloor_base/) | 14.0.1.0.1 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Core module for creating mobile apps
+[shopfloor_base](shopfloor_base/) | 14.0.1.0.2 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) [![sebalix](https://github.com/sebalix.png?size=30px)](https://github.com/sebalix) | Core module for creating mobile apps
 [shopfloor_batch_automatic_creation](shopfloor_batch_automatic_creation/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) | Create batch transfers for Cluster Picking
 [shopfloor_checkout_sync](shopfloor_checkout_sync/) | 14.0.1.0.0 | [![guewen](https://github.com/guewen.png?size=30px)](https://github.com/guewen) | Glue module
 [shopfloor_example](shopfloor_example/) | 14.0.1.0.0 |  | Show how to customize the Shopfloor app frontend.
 [shopfloor_mobile](shopfloor_mobile/) | 14.0.1.0.1 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Mobile frontend for WMS Shopfloor app
-[shopfloor_mobile_base](shopfloor_mobile_base/) | 14.0.1.0.1 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Mobile frontend for WMS Shopfloor app
+[shopfloor_mobile_base](shopfloor_mobile_base/) | 14.0.1.1.0 | [![simahawk](https://github.com/simahawk.png?size=30px)](https://github.com/simahawk) | Mobile frontend for WMS Shopfloor app
 [shopfloor_packing_info](shopfloor_packing_info/) | 14.0.1.0.0 |  | Allows to predefine packing information messages per partner.
 [shopfloor_workstation](shopfloor_workstation/) | 14.0.1.1.0 |  | Manage warehouse workstation with barcode scanners
 [shopfloor_workstation_mobile](shopfloor_workstation_mobile/) | 14.0.1.0.0 |  | Shopfloor mobile app integration for workstation
