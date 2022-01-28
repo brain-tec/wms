@@ -3,14 +3,14 @@
 {
     "name": "Shopfloor - Delivery with shipment advice",
     "summary": "Manage delivery process with shipment advices",
-    "version": "14.0.1.1.0",
+    "version": "14.0.1.1.1",
     "development_status": "Alpha",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",
     "author": "Camptocamp, Odoo Community Association (OCA)",
     "maintainers": ["sebalix", "TDu"],
     "license": "AGPL-3",
-    "application": True,
+    "application": False,
     "depends": [
         # OCA/wms
         "shopfloor",
