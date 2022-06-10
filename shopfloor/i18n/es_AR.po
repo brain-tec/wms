@@ -38,6 +38,54 @@ msgstr ""
 "\",\n"
 
 #. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__multiple_move_single_pack
+msgid ""
+"\n"
+"When picking a move,\n"
+"allow to set a destination package that was already used for the other "
+"lines.\n"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__unload_package_at_destination
+msgid ""
+"\n"
+"With this option, the lines you process by putting on a package during the\n"
+"picking process will be put as bulk products at the final destination "
+"location.\n"
+"\n"
+"This is useful if your picking device is emptied at the destination location "
+"or\n"
+"if you want to provide bulk products to the next operation.\n"
+"\n"
+"Incompatible with: \"Pick and pack at the same time\"\n"
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/models/shopfloor_menu.py:0
+#, python-format
+msgid ""
+"'Multiple moves same destination package' is mandatory when 'Pick and pack "
+"at the same time' is set."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/models/shopfloor_menu.py:0
+#, python-format
+msgid ""
+"'Pick and pack at the same time' is incompatible with 'Multiple moves same "
+"destination package'."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/models/shopfloor_menu.py:0
+#, python-format
+msgid ""
+"'Pick and pack at the same time' is incompatible with 'Unload package at "
+"destination'."
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model,name:shopfloor.model_shopfloor_app
 msgid "A Shopfloor application"
 msgstr "Una Aplicación de Taller"
@@ -163,6 +211,11 @@ msgid "Cluster Picking"
 msgstr "Grupo de Picking"
 
 #. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__multiple_move_single_pack
+msgid "Collect multiple moves on a same destination package"
+msgstr ""
+
+#. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Confirm location change from %s to %s?"
@@ -187,20 +240,15 @@ msgid "Control stock issue in location {} for {}"
 msgstr "Error en control de inventario en ubicación {} para {}"
 
 #. module: shopfloor
-#: code:addons/shopfloor/models/stock_move.py:0
-#, python-format
-msgid ""
-"Created from backorder <a href=# data-oe-model=stock.picking data-oe-id=%d>"
-"%s</a>."
-msgstr ""
-"Creado desde pedido pendiente <a href=# data-oe-model=stock.picking data-oe-"
-"id=%d>%s</a>."
-
-#. module: shopfloor
 #: code:addons/shopfloor/models/shopfloor_menu.py:0
 #, python-format
 msgid "Creation of moves is not allowed for menu {}."
 msgstr "La creación de movimientos no está permitida para el menú {}."
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_stock_move_line__date_planned
+msgid "Date Scheduled"
+msgstr ""
 
 #. module: shopfloor
 #: model:shopfloor.menu,name:shopfloor.shopfloor_menu_demo_delivery
@@ -439,6 +487,11 @@ msgstr "Cuenta de Línea de Movimiento"
 msgid "Move lines processed have to share the same source location."
 msgstr ""
 "Movimiento de líneas procesadas tienen que compartir la misma ubicación."
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__multiple_move_single_pack_is_possible
+msgid "Multiple Move Single Pack Is Possible"
+msgstr ""
 
 #. module: shopfloor
 #: code:addons/shopfloor/services/checkout.py:0
@@ -776,6 +829,16 @@ msgid "Planned Move Line"
 msgstr "Línea de Movimiento Planificada"
 
 #. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__prepackaged_product_is_possible
+msgid "Prepackaged Product Is Possible"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__allow_prepackaged_product
+msgid "Process as pre-packaged"
+msgstr ""
+
+#. module: shopfloor
 #: code:addons/shopfloor/models/shopfloor_menu.py:0
 #, python-format
 msgid "Processing reserved quantities is not allowed for menu {}."
@@ -891,6 +954,11 @@ msgstr ""
 "Estos tipos no satisfacen esta restricción:\n"
 "{}.\n"
 "Por favor, ajuste su configuración."
+
+#. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_stock_move_line__date_planned
+msgid "Scheduled date until move is done, then date of actual move processing"
+msgstr ""
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
@@ -1083,7 +1151,6 @@ msgstr ""
 "barras."
 
 #. module: shopfloor
-#: code:addons/shopfloor/models/stock_move_line.py:0
 #: code:addons/shopfloor/models/stock_picking.py:0
 #, python-format
 msgid ""
@@ -1149,6 +1216,12 @@ msgstr ""
 #, python-format
 msgid "The record you were working on does not exist anymore."
 msgstr "El registro en el que estaba trabajando ya no existe."
+
+#. module: shopfloor
+#: code:addons/shopfloor/models/stock_move.py:0
+#, python-format
+msgid "The split order {} has been created."
+msgstr ""
 
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_stock_move_line__picking_id
@@ -1274,6 +1347,16 @@ msgid "Units replaced by package {}."
 msgstr "Unidades reemplazadas por paquete {}."
 
 #. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__unload_package_at_destination_is_possible
+msgid "Unload Package At Destination Is Possible"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__unload_package_at_destination
+msgid "Unload package at destination"
+msgstr ""
+
+#. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Unrecoverable error, please restart."
@@ -1293,6 +1376,14 @@ msgstr "WMS"
 #: model:shopfloor.app,short_name:shopfloor.app_demo
 msgid "WMS (demo)"
 msgstr "WMS (demo)"
+
+#. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__allow_prepackaged_product
+msgid ""
+"When active, what you scan (typically a product packaging EAN) will be ship "
+"'as-is' and the operation will be validated triggering a backorder creation "
+"with the remaining lines."
+msgstr ""
 
 #. module: shopfloor
 #: code:addons/shopfloor/services/cluster_picking.py:0
@@ -1404,6 +1495,13 @@ msgstr "{} no es un paquete de destino válido."
 #, python-format
 msgid "{} {} put in {}"
 msgstr "{} {} poner en {}"
+
+#~ msgid ""
+#~ "Created from backorder <a href=# data-oe-model=stock.picking data-oe-id="
+#~ "%d>%s</a>."
+#~ msgstr ""
+#~ "Creado desde pedido pendiente <a href=# data-oe-model=stock.picking data-"
+#~ "oe-id=%d>%s</a>."
 
 #~ msgid "This location content can't be moved using this menu."
 #~ msgstr "El contenido de esta ubicación no se puede mover usando este menú."

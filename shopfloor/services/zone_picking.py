@@ -647,14 +647,8 @@ class ZonePicking(Component):
             return (location_changed, response)
         # destination location set to the scanned one
         self._write_destination_on_lines(move_line, location)
-        # the quantity done is set to the passed quantity
-        move_line.qty_done = quantity
-        # if the move has other move lines, it is split to have only this move line
-        move_line.move_id.split_other_move_lines(move_line)
-        # try to re-assign any split move (in case of partial qty)
-        if "confirmed" in move_line.picking_id.move_lines.mapped("state"):
-            move_line.picking_id.action_assign()
         stock = self._actions_for("stock")
+        stock.mark_move_line_as_picked(move_line, quantity)
         stock.validate_moves(move_line.move_id)
         location_changed = True
         # Zero check
@@ -667,14 +661,8 @@ class ZonePicking(Component):
         return not bool(package.quant_ids)
 
     def _is_package_already_used(self, package):
-        return bool(
-            self.env["stock.move.line"].search_count(
-                [
-                    ("state", "not in", ("done", "cancel")),
-                    ("result_package_id", "=", package.id),
-                ]
-            )
-        )
+        # Deprecated, use planned_move_line_ids instead
+        return bool(package.planned_move_line_ids)
 
     def _move_line_compare_qty(self, move_line, qty):
         rounding = move_line.product_uom_id.rounding
@@ -700,7 +688,8 @@ class ZonePicking(Component):
                 message=self.msg_store.package_not_empty(package),
             )
             return (package_changed, response)
-        if self._is_package_already_used(package):
+        multiple_move_allowed = self.work.menu.multiple_move_single_pack
+        if package.planned_move_line_ids and not multiple_move_allowed:
             response = self._response_for_set_line_destination(
                 move_line,
                 message=self.msg_store.package_already_used(package),
@@ -709,7 +698,6 @@ class ZonePicking(Component):
         # the quantity done is set to the passed quantity
         # but if we move a partial qty, we need to split the move line
         compare = self._move_line_compare_qty(move_line, quantity)
-        qty_lesser = compare == -1
         qty_greater = compare == 1
         if qty_greater:
             response = self._response_for_set_line_destination(
@@ -717,30 +705,14 @@ class ZonePicking(Component):
                 message=self.msg_store.unable_to_pick_more(move_line.product_uom_qty),
             )
             return (package_changed, response)
-        elif qty_lesser:
-            # split the move line which will be processed later
-            remaining = move_line.product_uom_qty - quantity
-            move_line.copy({"product_uom_qty": remaining, "qty_done": 0})
-            # if we didn't bypass reservation update, the quant reservation
-            # would be reduced as much as the deduced quantity, which is wrong
-            # as we only moved the quantity to a new move line
-            move_line.with_context(
-                bypass_reservation_update=True
-            ).product_uom_qty = quantity
-        self._set_move_line_as_done(move_line, quantity, package)
+        stock = self._actions_for("stock")
+        stock.mark_move_line_as_picked(move_line, quantity, package)
         package_changed = True
         # Zero check
         zero_check = self.picking_type.shopfloor_zero_check
         if zero_check and move_line.location_id.planned_qty_in_location_is_empty():
             response = self._response_for_zero_check(move_line)
         return (package_changed, response)
-
-    def _set_move_line_as_done(self, move_line, quantity, package, user=None):
-        move_line.qty_done = quantity
-        # destination package is set to the scanned one
-        move_line.result_package_id = package
-        # the field ``shopfloor_user_id`` is updated with the current user
-        move_line.shopfloor_user_id = user or self.env.user
 
     # flake8: noqa: C901
     def set_destination(
@@ -1178,12 +1150,6 @@ class ZonePicking(Component):
                 )
             # the scanned location is still valid, use it
             self._write_destination_on_lines(buffer_lines, location)
-            # set lines to done + refresh buffer lines (should be empty)
-            # split move lines to a backorder move
-            # if quantity is not fully satisfied
-            # TODO: update tests
-            for move in moves:
-                move.split_other_move_lines(buffer_lines & move.move_line_ids)
             stock = self._actions_for("stock")
             stock.validate_moves(moves)
             message = self.msg_store.buffer_complete()
@@ -1196,6 +1162,8 @@ class ZonePicking(Component):
         self._lock_lines(lines)
         lines.location_dest_id = location
         lines.package_level_id.location_dest_id = location
+        if self.work.menu.unload_package_at_destination:
+            lines.result_package_id = False
 
     def unload_split(self):
         """Indicates that now the buffer must be treated line per line

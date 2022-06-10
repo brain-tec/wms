@@ -122,6 +122,54 @@ class ZonePickingUnloadSetDestinationCase(ZonePickingCommonCase):
             move_line,
             message=self.service.msg_store.dest_location_not_allowed(),
         )
+        # Ensure that when unload_package_at_destination is False,
+        # the result_package_id remains.
+        self.assertEqual(move_line.result_package_id, self.free_package)
+
+    def test_unload_set_destination_unload_package_enabled(self):
+        move_line = self.picking1.move_line_ids
+        packing_sublocation1 = (
+            self.env["stock.location"]
+            .sudo()
+            .create(
+                {
+                    "name": "Packing sublocation-1",
+                    "location_id": self.packing_location.id,
+                    "barcode": "PACKING_SUBLOCATIO_1",
+                }
+            )
+        )
+        packing_sublocation2 = (
+            self.env["stock.location"]
+            .sudo()
+            .create(
+                {
+                    "name": "Packing sublocation-2",
+                    "location_id": self.packing_location.id,
+                    "barcode": "PACKING_SUBLOCATIO_2",
+                }
+            )
+        )
+        # set the destination package
+        self.service._set_destination_package(
+            move_line,
+            move_line.product_uom_qty,
+            self.free_package,
+        )
+        move_line.location_dest_id = packing_sublocation1
+        # Enable unload_package_at_destination
+        self.menu.sudo().write({"unload_package_at_destination": True})
+        self.service.dispatch(
+            "unload_set_destination",
+            params={
+                "package_id": self.free_package.id,
+                "barcode": packing_sublocation2.barcode,
+                "confirmation": True,
+            },
+        )
+        # Response has already been tested in the test above
+        # result package should be False
+        self.assertFalse(move_line.result_package_id)
 
     def test_unload_set_destination_confirm_location(self):
         zone_location = self.zone_location
@@ -302,11 +350,12 @@ class ZonePickingUnloadSetDestinationCase(ZonePickingCommonCase):
         )
         # check data
         # move line has been moved to a new picking
-        # move line has been validated in the current picking
-        self.assertEqual(move_line.move_id.picking_id, self.picking_z)
-        # the new picking (backorder) contains a new line w/ the rest of the qty
+        # move line has been validated in the new picking
+        self.assertNotEqual(move_line.move_id.picking_id, self.picking_z)
+        backorder = move_line.move_id.picking_id.backorder_id
+        self.assertEqual(backorder, self.picking_z)
+        # the backorder contains a new line w/ the rest of the qty
         # that couldn't be processed
-        backorder = self.picking_z.backorder_ids[0]
         self.assertEqual(backorder.move_lines[0].product_uom_qty, 8)
         self.assertEqual(backorder.state, "confirmed")
         # the line has been processed
