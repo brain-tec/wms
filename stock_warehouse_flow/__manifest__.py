@@ -6,7 +6,7 @@
     "author": "Camptocamp, BCIM, Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/wms",
     "category": "Warehouse Management",
-    "version": "14.0.1.0.1",
+    "version": "14.0.1.0.2",
     "license": "AGPL-3",
     "depends": [
         # core
@@ -14,8 +14,6 @@
         "delivery",
         # OCA/stock-logistics-workflow
         "delivery_procurement_group_carrier",
-        # OCA/wms
-        "stock_available_to_promise_release",
     ],
     "demo": [
         "demo/stock_warehouse_flow.xml",
