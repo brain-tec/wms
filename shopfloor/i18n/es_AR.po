@@ -1369,6 +1369,12 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "This product is part of a package, please scan a package."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "This product is part of multiple packages, please scan a package."
 msgstr "Este producto es parte de varios paquetes, escanee un paquete."
 
@@ -1434,6 +1440,16 @@ msgstr "Error irrecuperable, por favor reinicie."
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__unreserve_other_moves_is_possible
 msgid "Unreserve Other Moves Is Possible"
 msgstr "Es posible Anular la Reserva de Otros Movimientos"
+
+#. module: shopfloor
+#: model:shopfloor.profile,name:shopfloor.profile_demo_2
+msgid "WH delivery"
+msgstr ""
+
+#. module: shopfloor
+#: model:shopfloor.profile,name:shopfloor.profile_demo_1
+msgid "WH worker"
+msgstr ""
 
 #. module: shopfloor
 #: model:ir.model.fields.selection,name:shopfloor.selection__shopfloor_app__category__wms
