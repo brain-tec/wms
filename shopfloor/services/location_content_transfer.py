@@ -1,5 +1,6 @@
 # Copyright 2020-2021 Camptocamp SA (http://www.camptocamp.com)
 # Copyright 2020-2022 Jacques-Etienne Baudoux (BCIM) <je@bcim.be>
+# Copyright 2023 Michael Tietz (MT Software) <mtietz@mt-software.de>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 from odoo import _, fields
 
@@ -49,6 +50,8 @@ class LocationContentTransfer(Component):
     _name = "shopfloor.location.content.transfer"
     _usage = "location_content_transfer"
     _description = __doc__
+
+    _advisory_lock_find_work = "location_content_transfer_find_work"
 
     def _response_for_start(self, message=None, popup=None):
         """Transition to the 'start' or 'get_work' state
@@ -245,18 +248,24 @@ class LocationContentTransfer(Component):
         return self.env["stock.move"].create(move_vals_list)
 
     def _find_location_to_work_from(self):
-        next_picking = self.env["stock.picking"].search(
+        location = self.env["stock.location"]
+        pickings = self.env["stock.picking"].search(
             [
                 ("picking_type_id", "in", self.picking_types.ids),
                 ("state", "=", "assigned"),
+                ("printed", "=", False),
             ],
             order="create_date",
-            limit=1,
         )
-        move_lines = next_picking.move_line_ids.filtered(
-            lambda line: line.qty_done < line.product_uom_qty
-        )
-        return fields.first(move_lines).location_id
+
+        for next_picking in pickings:
+            move_lines = next_picking.move_line_ids.filtered(
+                lambda line: line.qty_done < line.product_uom_qty
+            )
+            location = fields.first(move_lines).location_id
+            if location:
+                break
+        return location
 
     def find_work(self):
         """Find the next location to work from, for a user.
@@ -273,6 +282,7 @@ class LocationContentTransfer(Component):
         response = self._recover_started_picking()
         if response:
             return response
+        self._actions_for("lock").advisory(self._advisory_lock_find_work)
         location = self._find_location_to_work_from()
         if not location:
             return self._response_for_start(message=self.msg_store.no_work_found())
@@ -281,24 +291,30 @@ class LocationContentTransfer(Component):
         stock.mark_move_line_as_picked(move_lines, quantity=0)
         return self._response_for_scan_location(location=location)
 
+    def _find_move_lines_to_cancel_work(self, location):
+        unreserve = self._actions_for("stock.unreserve")
+        return self.env["stock.move.line"].search(
+            unreserve._find_location_all_move_lines_domain(location)
+        )
+
+    def _move_lines_cancel_work(self, move_lines):
+        move_lines.write({"shopfloor_user_id": False})
+        move_lines.mapped("picking_id").write({"user_id": False})
+        stock = self._actions_for("stock")
+        stock.unmark_move_line_as_picked(move_lines)
+
     def cancel_work(self, location_id):
         """Cancel work marked as picked by the user.
 
         Transitions:
         * start:
         """
-        unreserve = self._actions_for("stock.unreserve")
         location = self.env["stock.location"].browse(location_id)
         if not location:
             return self._response_for_start(message=self.msg_store.location_not_found())
-        location_move_lines = self.env["stock.move.line"].search(
-            unreserve._find_location_all_move_lines_domain(location)
-        )
 
-        location_move_lines.write({"shopfloor_user_id": False})
-        location_move_lines.mapped("picking_id").write({"user_id": False})
-        stock = self._actions_for("stock")
-        stock.unmark_move_line_as_picked(location_move_lines)
+        move_lines = self._find_move_lines_to_cancel_work(location)
+        self._move_lines_cancel_work(move_lines)
         return self._response_for_start()
 
     def scan_location(self, barcode):  # noqa: C901
@@ -440,8 +456,7 @@ class LocationContentTransfer(Component):
 
     def _lock_lines(self, lines):
         """Lock move lines"""
-        sql = "SELECT id FROM %s WHERE ID IN %%s FOR UPDATE" % lines._table
-        self.env.cr.execute(sql, (tuple(lines.ids),), log_exceptions=False)
+        self._actions_for("lock").for_update(lines)
 
     def set_destination_all(self, location_id, barcode, confirmation=False):
         """Scan destination location for all the moves of the location
