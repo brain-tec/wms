@@ -1,7 +1,7 @@
 {
     "name": "Shopfloor Reception",
     "summary": "Reception scenario for shopfloor",
-    "version": "14.0.1.1.1",
+    "version": "14.0.1.2.0",
     "development_status": "Beta",
     "category": "Inventory",
     "website": "https://github.com/OCA/wms",
@@ -12,7 +12,6 @@
     "depends": ["shopfloor"],
     "data": [
         "data/shopfloor_scenario_data.xml",
-        "views/shopfloor_menu.xml",
     ],
     "demo": [
         "demo/stock_picking_type_demo.xml",
