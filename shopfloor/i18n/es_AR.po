@@ -526,6 +526,12 @@ msgstr "Transferencia de contenido de ubicación"
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "Location empty. Try scanning a package"
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "Location not allowed here."
 msgstr "La Ubicación no está permitida aquí."
 
@@ -1006,6 +1012,12 @@ msgid "Please scan the location first."
 msgstr ""
 
 #. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Please scan the package."
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__prepackaged_product_is_possible
 msgid "Prepackaged Product Is Possible"
 msgstr "Producto PreEmpaquetado Es Posible"
@@ -1325,6 +1337,12 @@ msgstr ""
 "activo cuando se selecciona un tipo."
 
 #. module: shopfloor
+#: code:addons/shopfloor/actions/stock.py:0
+#, python-format
+msgid "Someone is already working on these transfers"
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_stock_location__source_move_line_ids
 msgid "Source Move Line"
 msgstr "Recurso del Movimiento de Línea"
@@ -1524,6 +1542,18 @@ msgstr "El contenido de esta ubicación no se puede mover a la vez."
 #, python-format
 msgid "This location does not exist."
 msgstr "Esta ubicación no existe."
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "This location only contains packages, please scan one of them."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "This location requires packages. Please scan a destination package."
+msgstr ""
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
