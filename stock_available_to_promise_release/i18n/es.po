@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2023-09-07 18:37+0000\n"
+"PO-Revision-Date: 2023-10-09 11:39+0000\n"
 "Last-Translator: Ivorra78 <informatica@totmaterial.es>\n"
 "Language-Team: none\n"
 "Language: es\n"
@@ -15,6 +15,30 @@ msgstr ""
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 4.17\n"
+
+#. module: stock_available_to_promise_release
+#. odoo-python
+#: code:addons/stock_available_to_promise_release/models/stock_move.py:0
+#, python-format
+msgid ""
+"\n"
+"- Origin picking(s):\n"
+"\t -%(picking_names)s."
+msgstr ""
+"\n"
+"- Recogida(s) de origen:\n"
+"-%(picking_names)s."
+
+#. module: stock_available_to_promise_release
+#. odoo-python
+#: code:addons/stock_available_to_promise_release/models/stock_move.py:0
+#, python-format
+msgid ""
+"\n"
+"- Picking: %(picking_name)s."
+msgstr ""
+"\n"
+"- Recogida: %(picking_name)s."
 
 #. module: stock_available_to_promise_release
 #: model:ir.model.fields,field_description:stock_available_to_promise_release.field_stock_picking__release_ready_count
@@ -123,8 +147,8 @@ msgstr "Cliente"
 #: model:ir.model.fields,help:stock_available_to_promise_release.field_stock_move__date_priority
 #: model:ir.model.fields,help:stock_available_to_promise_release.field_stock_picking__date_priority
 msgid ""
-"Date/time used to sort moves to deliver first. Used to calculate the ordered"
-" available to promise."
+"Date/time used to sort moves to deliver first. Used to calculate the ordered "
+"available to promise."
 msgstr ""
 "Fecha/hora utilizada para ordenar los movimientos para entregar primero. Se "
 "utiliza para calcular los pedidos disponibles para prometer."
@@ -155,8 +179,8 @@ msgstr "ID(identificación)"
 #. module: stock_available_to_promise_release
 #: model:ir.model.fields,help:stock_available_to_promise_release.field_stock_picking_type__prevent_new_move_after_release
 msgid ""
-"If checked, once a delivery picking has been released, no more moves will be"
-" added to it. For example, if you add lines in the origin sales order, the "
+"If checked, once a delivery picking has been released, no more moves will be "
+"added to it. For example, if you add lines in the origin sales order, the "
 "new moves will be added to a new delivery."
 msgstr ""
 "Si está marcada, una vez liberado un albarán de entrega, no se le añadirán "
@@ -168,9 +192,9 @@ msgstr ""
 msgid ""
 "If checked, when a backorder is created (i.e. at the validation of the "
 "delivery), the moves into the backorder are unreleased as long as they came "
-"from a route configured to manually release moves. This means that the moves"
-" that were not delivered are put back in need for release and the "
-"unprocessed internal pulled moves are canceled."
+"from a route configured to manually release moves. This means that the moves "
+"that were not delivered are put back in need for release and the unprocessed "
+"internal pulled moves are canceled."
 msgstr ""
 "Si está marcada, cuando se crea un pedido pendiente (es decir, en la "
 "validación de la entrega), los movimientos en el pedido pendiente no se "
@@ -178,6 +202,11 @@ msgstr ""
 "manualmente los movimientos. Esto significa que los movimientos que no se "
 "entregaron se vuelven a poner en necesidad de liberación y se cancelan los "
 "movimientos de tracción interna no procesados."
+
+#. module: stock_available_to_promise_release
+#: model:ir.model,name:stock_available_to_promise_release.model_stock_location
+msgid "Inventory Locations"
+msgstr ""
 
 #. module: stock_available_to_promise_release
 #: model:ir.model,name:stock_available_to_promise_release.model_stock_route
@@ -276,11 +305,11 @@ msgstr "Variante del Producto"
 #. module: stock_available_to_promise_release
 #: model:ir.model.fields,help:stock_available_to_promise_release.field_stock_move__previous_promised_qty
 msgid ""
-"Quantities promised to moves with higher priority than this move (in default"
-" UoM of the product)."
+"Quantities promised to moves with higher priority than this move (in default "
+"UoM of the product)."
 msgstr ""
-"Cantidades prometidas a movimientos con mayor prioridad que este movimiento ("
-"en la UdM por defecto del producto)."
+"Cantidades prometidas a movimientos con mayor prioridad que este movimiento "
+"(en la UdM por defecto del producto)."
 
 #. module: stock_available_to_promise_release
 #: model:ir.model.fields,field_description:stock_available_to_promise_release.field_stock_move__previous_promised_qty
@@ -358,18 +387,16 @@ msgstr "Regla de existencias"
 #. module: stock_available_to_promise_release
 #. odoo-python
 #: code:addons/stock_available_to_promise_release/models/stock_picking.py:0
-#: code:addons/stock_available_to_promise_release/models/stock_picking.py:0
 #, python-format
 msgid ""
-"The backorder <a href=# data-oe-model=stock.picking data-oe-"
-"id=%(id)s>%(name)s</a> has been created."
+"The backorder <a href=# data-oe-model=stock.picking data-oe-id=%(id)s>"
+"%(name)s</a> has been created."
 msgstr ""
 "Se ha creado el pedido pendiente <a href=# data-oe-model=stock.picking data-"
 "oe-id=%(id)s>%(name)s</a>."
 
 #. module: stock_available_to_promise_release
 #. odoo-python
-#: code:addons/stock_available_to_promise_release/models/stock_move.py:0
 #: code:addons/stock_available_to_promise_release/models/stock_move.py:0
 #, python-format
 msgid ""
@@ -393,7 +420,8 @@ msgstr "Los discos seleccionados no serán publicados."
 #: model_terms:ir.actions.act_window,help:stock_available_to_promise_release.stock_move_release_action
 msgid ""
 "This menu gives you the full traceability of inventory\n"
-"                operations on a specific product. You can filter on the product\n"
+"                operations on a specific product. You can filter on the "
+"product\n"
 "                to see all the past or future movements for the product."
 msgstr ""
 "Este menú le brinda la trazabilidad completa del inventario.\n"
@@ -448,10 +476,6 @@ msgstr "Lanzamiento en espera"
 #. module: stock_available_to_promise_release
 #. odoo-python
 #: code:addons/stock_available_to_promise_release/models/stock_move.py:0
-#: code:addons/stock_available_to_promise_release/models/stock_move.py:0
-#: code:addons/stock_available_to_promise_release/models/stock_move.py:0
-#: code:addons/stock_available_to_promise_release/models/stock_move.py:0
-#: code:addons/stock_available_to_promise_release/models/stock_picking.py:0
 #: code:addons/stock_available_to_promise_release/models/stock_picking.py:0
 #, python-format
 msgid "Unsupported operator %s"
@@ -459,7 +483,6 @@ msgstr "Operador %s no soportado"
 
 #. module: stock_available_to_promise_release
 #. odoo-python
-#: code:addons/stock_available_to_promise_release/models/stock_picking.py:0
 #: code:addons/stock_available_to_promise_release/models/stock_picking.py:0
 #, python-format
 msgid "Unsupported operator: %s"
@@ -484,9 +507,12 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:stock_available_to_promise_release.res_config_settings_view_form_stock
 msgid ""
 "When your release transfers, their expected date\n"
-"                                is rescheduled to now + this preparation time (in minutes).\n"
-"                                Their scheduled date represents the latest the\n"
-"                                transfers should be done, and therefore, past\n"
+"                                is rescheduled to now + this preparation "
+"time (in minutes).\n"
+"                                Their scheduled date represents the latest "
+"the\n"
+"                                transfers should be done, and therefore, "
+"past\n"
 "                                this timestamp, considered late."
 msgstr ""
 "Cuando se transfiere su liberación, su fecha prevista.\n"
@@ -513,7 +539,6 @@ msgstr ""
 
 #. module: stock_available_to_promise_release
 #. odoo-python
-#: code:addons/stock_available_to_promise_release/models/stock_move.py:0
 #: code:addons/stock_available_to_promise_release/models/stock_move.py:0
 #, python-format
 msgid "You are not allowed to unrelease this move %(move_name)s."
