@@ -1,6 +1,6 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* shopfloor_rest_log
+# 	* stock_picking_type_shipping_policy_group_by
 #
 msgid ""
 msgstr ""
@@ -16,8 +16,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 4.17\n"
 
-#. module: shopfloor_rest_log
-#: model:ir.actions.act_window,name:shopfloor_rest_log.action_shopfloor_log
-#: model:ir.ui.menu,name:shopfloor_rest_log.menu_action_shopfloor_log
-msgid "Logs"
-msgstr "Registri"
+#. module: stock_picking_type_shipping_policy_group_by
+#: model:ir.model,name:stock_picking_type_shipping_policy_group_by.model_stock_move
+msgid "Stock Move"
+msgstr "Movimento di magazzino"

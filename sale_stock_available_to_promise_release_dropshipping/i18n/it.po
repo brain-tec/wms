@@ -1,6 +1,6 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* shopfloor_rest_log
+# 	* sale_stock_available_to_promise_release_dropshipping
 #
 msgid ""
 msgstr ""
@@ -16,8 +16,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 4.17\n"
 
-#. module: shopfloor_rest_log
-#: model:ir.actions.act_window,name:shopfloor_rest_log.action_shopfloor_log
-#: model:ir.ui.menu,name:shopfloor_rest_log.menu_action_shopfloor_log
-msgid "Logs"
-msgstr "Registri"
+#. module: sale_stock_available_to_promise_release_dropshipping
+#: model:ir.model,name:sale_stock_available_to_promise_release_dropshipping.model_sale_order_line
+msgid "Sales Order Line"
+msgstr "Riga ordine di vendita"
