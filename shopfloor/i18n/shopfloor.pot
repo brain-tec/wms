@@ -46,6 +46,15 @@ msgid ""
 msgstr ""
 
 #. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__order_pickings_by_priority
+msgid ""
+"\n"
+"When listing all transfers in the scenario, display the priority number\n"
+"(corresponding to the stars in each transfer in Odoo)\n"
+"and order them by priority as well.\n"
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__allow_alternative_destination_package
 msgid ""
 "\n"
@@ -796,6 +805,16 @@ msgstr ""
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Operation's already running. Would you like to take it over?"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__order_pickings_by_priority_is_possible
+msgid "Order Pickings By Priority Is Possible"
+msgstr ""
+
+#. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__order_pickings_by_priority
+msgid "Order transfers by priority"
 msgstr ""
 
 #. module: shopfloor
