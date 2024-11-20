@@ -54,6 +54,7 @@ setuptools.setup(
         'odoo14-addon-shopfloor_workstation_mobile',
         'odoo14-addon-stock_available_to_promise_release',
         'odoo14-addon-stock_available_to_promise_release_dynamic_routing',
+        'odoo14-addon-stock_available_to_promise_release_exclude_location',
         'odoo14-addon-stock_checkout_sync',
         'odoo14-addon-stock_dynamic_routing',
         'odoo14-addon-stock_dynamic_routing_checkout_sync',
