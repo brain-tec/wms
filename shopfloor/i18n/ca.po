@@ -120,6 +120,7 @@ msgstr "Es requereix un paquet destí."
 
 #. module: shopfloor
 #: code:addons/shopfloor/actions/change_package_lot.py:0
+#: code:addons/shopfloor/tests/test_checkout_scan_line.py:0
 #, python-format
 msgid "A draft inventory has been created for control."
 msgstr "S'ha creat un inventari esborrany per a control."
@@ -339,6 +340,11 @@ msgid ""
 msgstr ""
 
 #. module: shopfloor
+#: model:ir.model.fields,field_description:shopfloor.field_stock_move_line__result_package_id
+msgid "Destination Package"
+msgstr ""
+
+#. module: shopfloor
 #: model:ir.model.fields,field_description:shopfloor.field_shopfloor_menu__disable_full_bin_action_is_possible
 msgid "Disable Full Bin Action Is Possible"
 msgstr ""
@@ -415,6 +421,11 @@ msgstr ""
 #: model:ir.model.fields,field_description:shopfloor.field_stock_quant_package__id
 msgid "ID"
 msgstr "ID"
+
+#. module: shopfloor
+#: model:ir.model.fields,help:shopfloor.field_stock_move_line__result_package_id
+msgid "If set, the operations are packed into this package"
+msgstr ""
 
 #. module: shopfloor
 #: model:ir.model.fields,help:shopfloor.field_shopfloor_menu__ignore_no_putaway_available
@@ -530,9 +541,9 @@ msgid "Location {} empty"
 msgstr ""
 
 #. module: shopfloor
-#: code:addons/shopfloor/services/checkout.py:0
+#: code:addons/shopfloor/actions/message.py:0
 #, python-format
-msgid "Lot is not in the current transfer."
+msgid "Lot changed"
 msgstr ""
 
 #. module: shopfloor
@@ -656,6 +667,12 @@ msgstr ""
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "No line to pack found."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "No lines to process, set quantities on some"
 msgstr ""
 
 #. module: shopfloor
@@ -891,7 +908,19 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "Package {} is empty, scan a location."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid "Package {} is not available in transfer {}."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Package {} is not empty anmyore."
 msgstr ""
 
 #. module: shopfloor
@@ -945,6 +974,12 @@ msgstr ""
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid "Packaging not found in the current transfer."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Packaging {} dimension updated."
 msgstr ""
 
 #. module: shopfloor
@@ -1165,6 +1200,12 @@ msgstr ""
 #: code:addons/shopfloor/services/location_content_transfer.py:0
 #, python-format
 msgid "Scan the package"
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Scanned lot differs from the previous scan: %(lot)s."
 msgstr ""
 
 #. module: shopfloor
@@ -1417,8 +1458,8 @@ msgstr ""
 #: code:addons/shopfloor/models/stock_picking.py:0
 #, python-format
 msgid ""
-"The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-id=\"%d"
-"\">%s</a> has been created."
+"The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-"
+"id=\"%d\">%s</a> has been created."
 msgstr ""
 
 #. module: shopfloor
@@ -1555,6 +1596,12 @@ msgstr ""
 #. module: shopfloor
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
+msgid "This lot does not exist anymore."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
 msgid ""
 "This lot is part of a package with other products, please scan a package."
 msgstr ""
@@ -1651,6 +1698,12 @@ msgstr ""
 msgid ""
 "Transferring to a different package is not allowed, please scan a location "
 "instead."
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid "Unable to find a line with the same product but different lot."
 msgstr ""
 
 #. module: shopfloor
@@ -1833,6 +1886,15 @@ msgstr ""
 #: code:addons/shopfloor/actions/message.py:0
 #, python-format
 msgid ""
+"You scanned a different lot with the same product, do you want to change "
+"lot? Scan it again to confirm. The first line matching this product will be "
+"updated. "
+msgstr ""
+
+#. module: shopfloor
+#: code:addons/shopfloor/actions/message.py:0
+#, python-format
+msgid ""
 "You scanned a different package with the same product, do you want to change "
 "pack? Scan it again to confirm"
 msgstr ""
@@ -1883,8 +1945,8 @@ msgid "{} {} put in {}"
 msgstr ""
 
 #~ msgid ""
-#~ "Created from backorder <a href=# data-oe-model=stock.picking data-oe-id="
-#~ "%d>%s</a>."
+#~ "Created from backorder <a href=# data-oe-model=stock.picking data-oe-"
+#~ "id=%d>%s</a>."
 #~ msgstr ""
 #~ "Creat des de comanda pendent <a href=# data-oe-model=stock.picking data-"
 #~ "oe-id=%d>%s</a>."

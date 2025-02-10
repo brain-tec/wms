@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 14.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2023-10-18 15:36+0000\n"
+"PO-Revision-Date: 2024-09-18 10:06+0000\n"
 "Last-Translator: mymage <stefano.consolaro@mymage.it>\n"
 "Language-Team: none\n"
 "Language: it\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.17\n"
+"X-Generator: Weblate 5.6.2\n"
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,help:stock_reception_screen.field_stock_reception_screen__picking_state
@@ -43,13 +43,13 @@ msgstr ""
 "prodotti.\n"
 "(a) La politica di spedizione è \"Il prima possibile\": non è stato "
 "possibile riservare alcun prodotto.\n"
-"(b) La politica di spedizione \"Quando tutti i prodotti sono pronti\": non è "
-"stato possibile riservare tutti i prodotti.\n"
+"(b) La politica di spedizione è \"Quando tutti i prodotti sono pronti\": non "
+"è stato possibile riservare tutti i prodotti.\n"
 " * Pronto: il trasferimento è pronto per essere completato.\n"
 "(a) La politica di spedizione è \"Il prima possibile\": almeno un prodotto è "
 "stato riservato.\n"
-"(b) La politica di spedizione \"Quando tutti i prodotti sono pronti\": tutti "
-"i prodotti sono stati riservati.\n"
+"(b) La politica di spedizione è \"Quando tutti i prodotti sono pronti\": "
+"tutti i prodotti sono stati riservati.\n"
 " * Fatto: il trasferimento è stato completato.\n"
 " * Annullato: il trasferimento è stato annullato."
 
@@ -83,7 +83,7 @@ msgstr "Ingresso code a barre"
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen___barcode_scanned
 msgid "Barcode Scanned"
-msgstr "Barcode scansionato"
+msgstr "Codice a barre letto"
 
 #. module: stock_reception_screen
 #: model_terms:ir.ui.view,arch_db:stock_reception_screen.stock_reception_screen_view_form
@@ -133,31 +133,20 @@ msgid "Current Move Line Package Stored"
 msgstr "Riga movimento attuale collo depositato"
 
 #. module: stock_reception_screen
+#: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_product_outgoing_qty
+msgid "Current Move Product Outgoing Qty"
+msgstr "Q.tà in uscita prodotto del movimento attuale"
+
+#. module: stock_reception_screen
+#: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_product_qty_available
+msgid "Current Move Product Qty Available"
+msgstr "Q.tà disponibile prodotto movimento attuale"
+
+#. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_move__reception_screen_current_step
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_step
 msgid "Current Step"
 msgstr "Passo corrente"
-
-#. module: stock_reception_screen
-#: model:ir.model.fields,help:stock_reception_screen.field_stock_reception_screen__current_move_product_qty_available
-msgid ""
-"Current quantity of products.\n"
-"In a context with a single Stock Location, this includes goods stored at "
-"this Location, or any of its children.\n"
-"In a context with a single Warehouse, this includes goods stored in the "
-"Stock Location of this Warehouse, or any of its children.\n"
-"stored in the Stock Location of the Warehouse of this Shop, or any of its "
-"children.\n"
-"Otherwise, this includes goods stored in any Stock Location with 'internal' "
-"type."
-msgstr ""
-"Quantità attuale di prodotti.\n"
-"In un contesto con una sola ubicazione di magazzino, include beni stoccati "
-"in questa ubicazione o qualsiasi delle sue figlie.\n"
-"In un contesto con un solo magazzino, include beni stoccati nell'ubicazione "
-"di questo magazzino o una qualsiasi delle figlie.\n"
-"Stoccate nell'ubicazione di questo negozio, o qualsiasi delle sue figlie.\n"
-"Altrimenti, include beni stoccati in qualsiasi ubicazione di tipo 'interno'."
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_product_uom_qty
@@ -189,7 +178,7 @@ msgstr "Nome visualizzato"
 #: code:addons/stock_reception_screen/models/stock_reception_screen.py:0
 #, python-format
 msgid "Done"
-msgstr "Evasa"
+msgstr "Completata"
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_move_line__lot_expiration_date
@@ -200,7 +189,7 @@ msgstr "Fine data scadenza"
 #. module: stock_reception_screen
 #: model:ir.model.fields,help:stock_reception_screen.field_stock_reception_screen__current_move_has_tracking
 msgid "Ensure the traceability of a storable product in your warehouse."
-msgstr "Consente la tracciabilità di un prodotto stoccabile nel magazzino."
+msgstr "Assicura la tracciabilità di un prodotto stoccabile nel magazzino."
 
 #. module: stock_reception_screen
 #: model_terms:ir.ui.view,arch_db:stock_reception_screen.stock_reception_screen_view_form
@@ -231,7 +220,7 @@ msgstr ""
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__package_storage_type_height_required
 msgid "Height required for packages"
-msgstr "Altezza richiesta per li colli"
+msgstr "Altezza richiesta per i colli"
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_product_packaging__id
@@ -306,11 +295,6 @@ msgid "Operation"
 msgstr "Operazione"
 
 #. module: stock_reception_screen
-#: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_product_outgoing_qty
-msgid "Outgoing"
-msgstr "In partenza"
-
-#. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__package_height
 msgid "Package Height"
 msgstr "Altezza collo"
@@ -344,7 +328,7 @@ msgstr "Prodotto '{}' non trovato."
 #. module: stock_reception_screen
 #: model:ir.model,name:stock_reception_screen.model_stock_move_line
 msgid "Product Moves (Stock Move Line)"
-msgstr "Movimenti prodotto (riga movimento magazzino)"
+msgstr "Movimenti prodotto (riga movimento di magazzino)"
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_product_packaging_ids
@@ -361,7 +345,8 @@ msgstr "Imballaggio prodotto"
 #: code:addons/stock_reception_screen/models/stock_reception_screen.py:0
 #, python-format
 msgid "Product packaging info are missing. Please use the CUBISCAN."
-msgstr "Informazioni imballaggio prodotto non disponibili. Utilizzare CUBISCAN."
+msgstr ""
+"Informazioni imballaggio prodotto non disponibili. Utilizzare CUBISCAN."
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_has_tracking
@@ -371,35 +356,12 @@ msgstr "Prodotto con tracciamento"
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_line_qty_status
 msgid "Qty Status"
-msgstr "Stato qta"
+msgstr "Stato q.tà"
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_line_qty_done
 msgid "Quantity"
 msgstr "Quantità"
-
-#. module: stock_reception_screen
-#: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__current_move_product_qty_available
-msgid "Quantity On Hand"
-msgstr "Quantità disponibile"
-
-#. module: stock_reception_screen
-#: model:ir.model.fields,help:stock_reception_screen.field_stock_reception_screen__current_move_product_outgoing_qty
-msgid ""
-"Quantity of planned outgoing products.\n"
-"In a context with a single Stock Location, this includes goods leaving this "
-"Location, or any of its children.\n"
-"In a context with a single Warehouse, this includes goods leaving the Stock "
-"Location of this Warehouse, or any of its children.\n"
-"Otherwise, this includes goods leaving any Stock Location with 'internal' "
-"type."
-msgstr ""
-"Quantità dei prodotti in uscita pianificati.\n"
-"Nel caso di una singola ubicazione di magazzino, include i beni in uscita da "
-"questa ubicazione, o una delle sue figlie.\n"
-"Nel caso di un singolo magazzino, include i beni in partenza dalla "
-"ubicazione di questo magazzino, o una delle sue figlie.\n"
-"Altrimenti, include beni in uscita in qualsiasi ubicazione di tipo 'interno'."
 
 #. module: stock_reception_screen
 #: model_terms:ir.ui.view,arch_db:stock_reception_screen.view_move_line_tree
@@ -411,7 +373,7 @@ msgstr "Ricezione"
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_picking__reception_screen_id
 msgid "Reception Screen"
-msgstr "Schermo ricezione"
+msgstr "Schermata ricezione"
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__name
@@ -485,12 +447,12 @@ msgstr "Imposta quantità"
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__picking_origin
 msgid "Source Document"
-msgstr "Documento sorgente"
+msgstr "Documento di origine"
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_stock_reception_screen__picking_state
 msgid "Status"
-msgstr "Stati"
+msgstr "Stato"
 
 #. module: stock_reception_screen
 #: model:ir.model,name:stock_reception_screen.model_stock_move
@@ -505,7 +467,7 @@ msgstr "Movimenti di magazzino"
 #. module: stock_reception_screen
 #: model:ir.model,name:stock_reception_screen.model_stock_reception_screen
 msgid "Stock Reception Screen"
-msgstr "Schermo ricezione magazzino"
+msgstr "Schermata ricezione magazzino"
 
 #. module: stock_reception_screen
 #: model:ir.model.fields,field_description:stock_reception_screen.field_product_packaging__storage_type_name
@@ -519,8 +481,8 @@ msgid ""
 "The backorder <a href=\"#\" data-oe-model=\"stock.picking\" data-oe-id=\"%d"
 "\">%s</a> has been created."
 msgstr ""
-"È stato creato l'ordine residuo <a href=\"#\" data-oe-model=\"stock.picking\""
-" data-oe-id=\"%d\">%s</a> ."
+"È stato creato l'ordine residuo <a href=\"#\" data-oe-model=\"stock.picking"
+"\" data-oe-id=\"%d\">%s</a> ."
 
 #. module: stock_reception_screen
 #: code:addons/stock_reception_screen/models/stock_reception_screen.py:0
@@ -584,7 +546,7 @@ msgstr "UdM"
 #. module: stock_reception_screen
 #: model:ir.model.fields,help:stock_reception_screen.field_stock_reception_screen___barcode_scanned
 msgid "Value of the last barcode scanned."
-msgstr "Valore dell'ultimo codice a barre scansionato."
+msgstr "Valore dell'ultimo codice a barre letto."
 
 #. module: stock_reception_screen
 #: model_terms:ir.ui.view,arch_db:stock_reception_screen.stock_reception_screen_view_form
@@ -642,3 +604,47 @@ msgstr "Bisogna impostare la quantità ricevuta."
 #, python-format
 msgid "Your transfer has to be ready to receive goods."
 msgstr "Il trasferimento deve essere pronto a ricevere merce."
+
+#~ msgid ""
+#~ "Current quantity of products.\n"
+#~ "In a context with a single Stock Location, this includes goods stored at "
+#~ "this Location, or any of its children.\n"
+#~ "In a context with a single Warehouse, this includes goods stored in the "
+#~ "Stock Location of this Warehouse, or any of its children.\n"
+#~ "stored in the Stock Location of the Warehouse of this Shop, or any of its "
+#~ "children.\n"
+#~ "Otherwise, this includes goods stored in any Stock Location with "
+#~ "'internal' type."
+#~ msgstr ""
+#~ "Quantità attuale di prodotti.\n"
+#~ "In un contesto con una sola ubicazione di magazzino, include beni "
+#~ "stoccati in questa ubicazione o qualsiasi delle sue figlie.\n"
+#~ "In un contesto con un solo magazzino, include beni stoccati "
+#~ "nell'ubicazione di questo magazzino o una qualsiasi delle figlie.\n"
+#~ "Stoccate nell'ubicazione di questo negozio, o qualsiasi delle sue "
+#~ "figlie.\n"
+#~ "Altrimenti, include beni stoccati in qualsiasi ubicazione di tipo "
+#~ "'interno'."
+
+#~ msgid "Outgoing"
+#~ msgstr "In partenza"
+
+#~ msgid "Quantity On Hand"
+#~ msgstr "Quantità disponibile"
+
+#~ msgid ""
+#~ "Quantity of planned outgoing products.\n"
+#~ "In a context with a single Stock Location, this includes goods leaving "
+#~ "this Location, or any of its children.\n"
+#~ "In a context with a single Warehouse, this includes goods leaving the "
+#~ "Stock Location of this Warehouse, or any of its children.\n"
+#~ "Otherwise, this includes goods leaving any Stock Location with 'internal' "
+#~ "type."
+#~ msgstr ""
+#~ "Quantità dei prodotti in uscita pianificati.\n"
+#~ "Nel caso di una singola ubicazione di magazzino, include i beni in uscita "
+#~ "da questa ubicazione, o una delle sue figlie.\n"
+#~ "Nel caso di un singolo magazzino, include i beni in partenza dalla "
+#~ "ubicazione di questo magazzino, o una delle sue figlie.\n"
+#~ "Altrimenti, include beni in uscita in qualsiasi ubicazione di tipo "
+#~ "'interno'."

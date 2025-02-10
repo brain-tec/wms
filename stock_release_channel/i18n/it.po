@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 14.0\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2023-10-18 15:36+0000\n"
+"PO-Revision-Date: 2024-06-05 12:34+0000\n"
 "Last-Translator: mymage <stefano.consolaro@mymage.it>\n"
 "Language-Team: none\n"
 "Language: it\n"
@@ -175,7 +175,7 @@ msgstr "Trasferimenti disponibili"
 #: code:addons/stock_release_channel/models/stock_release_channel.py:0
 #, python-format
 msgid "Channel %s has no validated transfer yet."
-msgstr "Il canale %(name)s non ha ancora un trasferimento validato."
+msgstr "Il canale %s non ha ancora un trasferimento validato."
 
 #. module: stock_release_channel
 #: model:ir.model.fields,field_description:stock_release_channel.field_stock_release_channel__color
@@ -190,7 +190,7 @@ msgstr "Entità commerciale"
 #. module: stock_release_channel
 #: model_terms:ir.ui.view,arch_db:stock_release_channel.view_picking_internal_search
 msgid "Commercial Partner"
-msgstr "Partner Commerciale"
+msgstr "Partner commerciale"
 
 #. module: stock_release_channel
 #: model:ir.model.fields,field_description:stock_release_channel.field_stock_release_channel__create_uid
@@ -614,7 +614,7 @@ msgstr ""
 "Lo stato consenti di controllare la disponibilità del canale di rilascio.\n"
 "* Aperto: assegnazione manuale e automatica del prelievo al rilascio è "
 "attiva e le operazioni di rilascio sono consentite.\n"
-"* Bloccato: le operazini di rilascio sono vietate. (i processi di "
+"* Bloccato: le operazioni di rilascio sono vietate. (i processi di "
 "assegnazione sono ancora in lavoro)\n"
 "* Sospeso: i prelievi assegnati e non elaborati vengono revocati dal canale "
 "di rilascio.\n"
@@ -673,7 +673,7 @@ msgstr "Sblocca"
 #. module: stock_release_channel
 #: model_terms:ir.ui.view,arch_db:stock_release_channel.stock_release_channel_kanban_view
 msgid "Waiting"
-msgstr "Attesa"
+msgstr "In attesa"
 
 #. module: stock_release_channel
 #: model:ir.model.fields,field_description:stock_release_channel.field_stock_release_channel__count_move_waiting

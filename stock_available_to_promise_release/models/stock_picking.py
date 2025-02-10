@@ -1,8 +1,8 @@
 # Copyright 2020 Camptocamp (https://www.camptocamp.com)
+# Copyright 2023 Michael Tietz (MT Software) <mtietz@mt-software.de>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
 
 from odoo import _, api, exceptions, fields, models
-from odoo.tools.float_utils import float_compare
 
 
 class StockPicking(models.Model):
@@ -30,6 +30,13 @@ class StockPicking(models.Model):
     state_id = fields.Many2one(related="partner_id.state_id", store=True)
     city = fields.Char(related="partner_id.city", store=True)
     last_release_date = fields.Datetime()
+    release_policy = fields.Selection(
+        [("direct", "As soon as possible"), ("one", "When all products are ready")],
+        "Release Policy",
+        default="direct",
+        required=True,
+        help="It specifies how to release a transfer partially or all at once",
+    )
 
     @api.depends("move_lines.need_release")
     def _compute_need_release(self):
@@ -65,40 +72,28 @@ class StockPicking(models.Model):
         picking_ids = [group["picking_id"][0] for group in groups]
         return [("id", in_operator, picking_ids)]
 
-    def _get_shipping_policy(self):
-        """Hook returning the related shipping policy."""
-        self.ensure_one()
-        return self.move_type
-
-    @api.depends("move_lines.ordered_available_to_promise_qty")
+    @api.depends(
+        "release_policy",
+        "move_lines.ordered_available_to_promise_qty",
+        "move_lines.need_release",
+        "move_lines.state",
+    )
     def _compute_release_ready(self):
         for picking in self:
-            if not picking.need_release:
-                picking.release_ready = False
-                picking.release_ready_count = 0
-                continue
             move_lines = picking.move_lines.filtered(
-                lambda move: move.state not in ("cancel", "done") and move.need_release
+                lambda move: move._is_release_needed()
             )
-            if picking._get_shipping_policy() == "one":
-                picking.release_ready_count = sum(
-                    1
-                    for move in move_lines
-                    if float_compare(
-                        move.ordered_available_to_promise_qty,
-                        move.product_qty,
-                        precision_rounding=move.product_id.uom_id.rounding,
-                    )
-                    == 0
-                )
-                picking.release_ready = picking.release_ready_count == len(move_lines)
-            else:
-                picking.release_ready_count = sum(
-                    1
-                    for move in move_lines
-                    if move.ordered_available_to_promise_qty > 0
-                )
-                picking.release_ready = bool(picking.release_ready_count)
+            release_ready = False
+            release_ready_count = sum(
+                1 for move in move_lines if move._is_release_ready()
+            )
+            if move_lines:
+                if picking.release_policy == "one":
+                    release_ready = release_ready_count == len(move_lines)
+                else:
+                    release_ready = bool(release_ready_count)
+            picking.release_ready_count = release_ready_count
+            picking.release_ready = release_ready
 
     def _search_release_ready(self, operator, value):
         if operator != "=":
@@ -193,7 +188,7 @@ class StockPicking(models.Model):
     def unrelease(self, safe_unrelease=False):
         """Unrelease the moves of the picking.
 
-        If safe_unrelease is True, the unreleasaable moves for which the
+        If safe_unrelease is True, the unreleasable moves for which the
         processing has already started will be ignored
         """
         self.mapped("move_lines").unrelease(safe_unrelease=safe_unrelease)

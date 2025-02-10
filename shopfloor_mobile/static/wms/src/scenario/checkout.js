@@ -92,7 +92,7 @@ const Checkout = {
                     :key="make_state_component_key(['detail-picking-select'])"
                     />
                 <div class="button-list button-vertical-list full">
-                    <v-row align="center">
+                    <v-row align="center" v-if="state.data.package_allowed">
                         <v-col class="text-center" cols="12">
                             <btn-action
                                    @click="state.on_existing_pack"
@@ -100,7 +100,7 @@ const Checkout = {
                                    >Existing pack</btn-action>
                         </v-col>
                     </v-row>
-                    <v-row align="center">
+                    <v-row align="center" v-if="state.data.package_allowed">
                         <v-col class="text-center" cols="12">
                             <btn-action
                                    @click="state.on_new_pack"
@@ -293,6 +293,20 @@ const Checkout = {
                         {path: "origin"},
                         {path: "carrier.name", label: "Carrier"},
                         {path: "move_line_count", label: "Lines"},
+                        {
+                            path: "priority",
+                            render_component: "priority-widget",
+                            render_options: function (record) {
+                                const priority = parseInt(record.priority);
+                                // We need to pass the label to the component as an option instead of using "display_no_value"
+                                // because pickings with no priority will still have a string value of "0"
+                                // and the label would always be displayed.
+                                return {
+                                    priority,
+                                    label: priority ? "Priority: " : null,
+                                };
+                            },
+                        },
                     ],
                 },
             };

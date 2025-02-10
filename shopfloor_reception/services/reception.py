@@ -137,12 +137,10 @@ class Reception(Component):
         return self._response_for_select_move(picking)
 
     def _response_for_select_move(self, picking, message=None):
-        self._assign_user_to_picking(picking)
         data = {"picking": self._data_for_stock_picking(picking, with_lines=True)}
         return self._response(next_state="select_move", data=data, message=message)
 
     def _response_for_confirm_done(self, picking, message=None):
-        self._assign_user_to_picking(picking)
         data = {"picking": self._data_for_stock_picking(picking, with_lines=True)}
         return self._response(next_state="confirm_done", data=data, message=message)
 
@@ -161,7 +159,6 @@ class Reception(Component):
     def _select_document_from_move_lines(self, move_lines, msg_func):
         pickings = move_lines.move_id.picking_id
         if len(pickings) == 1:
-            self._assign_user_to_picking(pickings)
             if (
                 move_lines.product_id.tracking not in ("lot", "serial")
                 or move_lines.lot_id
@@ -248,31 +245,41 @@ class Reception(Component):
         )
 
     def _scan_line__find_or_create_line(self, picking, move, qty_done=1):
-        line = fields.first(
-            move.move_line_ids.filtered(
-                lambda l: (
-                    not l.result_package_id
-                    and l.shopfloor_user_id.id in [False, self.env.uid]
-                )
-            )
-        )
-        if line:
-            # The line quantity to do needs to correspond to
-            # the remaining quantity to do of its move.
-            line.product_uom_qty = move.product_uom_qty - move.quantity_done
-        else:
-            qty_todo_remaining = max(0, move.product_uom_qty - move.quantity_done)
-            values = move._prepare_move_line_vals(quantity=qty_todo_remaining)
+        """Find or create a line  on a move for the user to work on.
+
+        First try to find a line already assigned to the user.
+        Then a line that is not yet assigned to any users (locking the line
+        to avoid concurent access.)
+        If none are found create a new line.
+
+        """
+        line = None
+        unassigned_lines = self.env["stock.move.line"]
+        for move_line in move.move_line_ids:
+            if move_line.result_package_id:
+                continue
+            if move_line.shopfloor_user_id.id == self.env.uid:
+                line = move_line
+                break
+            elif not move_line.shopfloor_user_id:
+                unassigned_lines |= move_line
+        if not line and unassigned_lines:
+            lock = self._actions_for("lock")
+            for move_line in unassigned_lines:
+                if lock.for_update(move_line, skip_locked=True):
+                    line = move_line
+                    break
+        if not line:
+            values = move._prepare_move_line_vals()
             line = self.env["stock.move.line"].create(values)
         return self._scan_line__assign_user(picking, line, qty_done)
 
     def _scan_line__assign_user(self, picking, line, qty_done):
         product = line.product_id
-        self._assign_user_to_picking(picking)
         self._assign_user_to_line(line)
         line.qty_done += qty_done
         if product.tracking not in ("lot", "serial") or (line.lot_id or line.lot_name):
-            return self._response_for_set_quantity(picking, line)
+            return self._before_state__set_quantity(picking, line)
         return self._response_for_set_lot(picking, line)
 
     def _select_line__filter_lines_by_packaging__return(self, lines, packaging):
@@ -312,7 +319,11 @@ class Reception(Component):
         reception_pickings = picking_filter_result.filtered(
             lambda p: p.picking_type_id.id in self.picking_types.ids
         )
-        if picking_filter_result and not reception_pickings:
+        if (
+            picking_filter_result
+            and not reception_pickings
+            and not self.work.menu.allow_return
+        ):
             return self._response_for_select_document(
                 message=self.msg_store.cannot_move_something_in_picking_type()
             )
@@ -333,7 +344,6 @@ class Reception(Component):
                 < today_end
             )
             if len(picking_filter_result_due_today) == 1:
-                self._assign_user_to_picking(picking_filter_result_due_today)
                 return self._select_picking(picking_filter_result_due_today)
             if len(picking_filter_result) > 1:
                 return self._response_for_select_document(
@@ -351,7 +361,8 @@ class Reception(Component):
             return self._select_document_from_packaging(packaging)
 
     def _scan_document__by_lot(self, lot, barcode):
-        return self._select_document_from_lot(lot)
+        if lot:
+            return self._select_document_from_lot(lot)
 
     def _scan_document__by_origin_move(self, moves, barcode):
         if not self.work.menu.allow_return:
@@ -418,20 +429,22 @@ class Reception(Component):
             return self._scan_line__find_or_create_line(picking, return_move)
 
     def _scan_line__by_product(self, picking, product):
-        move = picking.move_lines.filtered(lambda m: m.product_id == product)
+        moves = picking.move_lines.filtered(lambda m: m.product_id == product)
         # Only create a return if don't already have a maching reception move
-        if not move and self.work.menu.allow_return:
+        if not moves and self.work.menu.allow_return:
             response = self._scan_line__by_product__return(picking, product)
             if response:
                 return response
         # Otherwise, the picking isn't a return, and should be a regular reception
-        message = self._check_move_available(move, "product")
-        if message:
-            return self._response_for_select_move(
-                picking,
-                message=message,
-            )
-        return self._scan_line__find_or_create_line(picking, move)
+        message = not moves and self._check_move_available(moves, "product")
+        for move in moves:
+            message = self._check_move_available(move, "product")
+            if not message:
+                return self._scan_line__find_or_create_line(picking, move)
+        return self._response_for_select_move(
+            picking,
+            message=message,
+        )
 
     def _scan_line__by_packaging__return(self, picking, packaging):
         search = self._actions_for("search")
@@ -685,9 +698,6 @@ class Reception(Component):
             if response:
                 return response
 
-    def _assign_user_to_picking(self, picking):
-        picking.user_id = self.env.user
-
     def _assign_user_to_line(self, line):
         line.shopfloor_user_id = self.env.user
 
@@ -749,7 +759,7 @@ class Reception(Component):
             message=message,
         )
 
-    def _align_product_uom_qties(self, move):
+    def _align_display_product_uom_qty(self, line, response):
         # This method aligns product uom qties on move lines.
         # In the shopfloor context, we might have multiple users working at
         # the same time on the same move. This is done by creating one move line
@@ -761,32 +771,39 @@ class Reception(Component):
         # remaining_todo = move.product_uom_qty - move.quantity_done
         # line.product_uom_qty = line.qty_done + remaining_todo
 
-        # However, if the overall qty_done is > to the move's product_uom_qty,
-        # then we're not updating the line's product_uom_qty.
-
         # TODO, do we need to check move's state?
         # If move is already done, do not update lines qties
         # if move.state in ("done", "cancel"):
         #     return
-
+        move = line.move_id
         qty_todo = move.product_uom_qty
-        qty_done = sum(move.move_line_ids.mapped("qty_done"))
-        rounding = move.product_id.uom_id.rounding
-        compare = float_compare(qty_done, qty_todo, precision_rounding=rounding)
-        if compare < 1:  # If qty done <= qty todo, align qty todo on move lines
-            remaining_todo = qty_todo - qty_done
-            # if we didn't bypass reservation update, the quant reservation
-            # would be reduced as much as the deduced quantity, which is wrong
-            # as we only moved the quantity to a new move line
-            lines = move.move_line_ids.with_context(bypass_reservation_update=True)
-            for line in lines:
-                line.product_uom_qty = line.qty_done + remaining_todo
+        other_lines_qty_done = 0.0
+        move_uom = move.product_uom
+        for move_line in move.move_line_ids - line:
+            # Use move's uom
+            line_uom = move_line.product_uom_id
+            other_lines_qty_done += line_uom._compute_quantity(
+                move_line.qty_done, move_line.product_uom_id, round=False
+            )
+        remaining_todo = qty_todo - other_lines_qty_done
+        # Change back to line uom
+        line_todo = line.product_uom_id._compute_quantity(
+            remaining_todo, move_uom, round=False
+        )
+        # If more has been done keep the quantity to zero
+        response["data"]["set_quantity"]["selected_move_line"][0]["quantity"] = max(
+            line_todo, 0
+        )
+        return response
+
+    def _before_state__set_quantity(self, picking, line, message=None):
+        # Used by inherting module  see shopfloor_reception_packaging_dimension
+        return self._response_for_set_quantity(picking, line, message=message)
 
     def _response_for_set_quantity(
-        self, picking, line, message=None, asking_confirmation=False
+        self, picking, line, message=None, asking_confirmation=None
     ):
-        self._align_product_uom_qties(line.move_id)
-        return self._response(
+        response = self._response(
             next_state="set_quantity",
             data={
                 "selected_move_line": self._data_for_move_lines(line),
@@ -795,6 +812,7 @@ class Reception(Component):
             },
             message=message,
         )
+        return self._align_display_product_uom_qty(line, response)
 
     def _response_for_set_destination(self, picking, line, message=None):
         return self._response(
@@ -839,7 +857,12 @@ class Reception(Component):
     def _scan_document__get_handlers_by_type(self):
         return {
             "picking": self._scan_document__by_picking,
-            "product": self._scan_document__by_product,
+            # only add the handler if scan_location_or_pack_first is disabled
+            "product": (
+                self._scan_document__by_product
+                if not self.work.menu.scan_location_or_pack_first
+                else None
+            ),
             "packaging": self._scan_document__by_packaging,
             "lot": self._scan_document__by_lot,
             "origin_move": self._scan_document__by_origin_move,
@@ -872,12 +895,15 @@ class Reception(Component):
         handlers_by_type = self._scan_document__get_handlers_by_type()
         search = self._actions_for("search")
         find_kw = self._scan_document__get_find_kw()
-        search_result = search.find(
-            barcode, handlers_by_type.keys(), handler_kw=find_kw
-        )
-        handler = handlers_by_type.get(search_result.type)
-        if handler:
-            return handler(search_result.record, barcode)
+        for handler_type, handler in handlers_by_type.items():
+            record = search._find_record_by_type(
+                barcode, handler_type, handler_kw=find_kw
+            )
+            if not record:
+                continue
+            res = handler(record, barcode)
+            if res:
+                return res
         return self._scan_document__fallback()
 
     def list_stock_pickings(self):
@@ -955,13 +981,8 @@ class Reception(Component):
             return self._response_for_select_move(
                 picking, message=self.msg_store.transfer_no_qty_done()
             )
-        if not confirmation:
-            # Do not create a backorder if this is a shopfloor return.
-            if picking.is_shopfloor_created and self.work.menu.allow_return:
-                picking.with_context(cancel_backorder=True)._action_done()
-                return self._response_for_select_document(
-                    message=self.msg_store.transfer_done_success(picking)
-                )
+        cancel_backorder = picking.is_shopfloor_created and self.work.menu.allow_return
+        if not confirmation and not cancel_backorder:
             to_backorder = picking._check_backorder()
             if to_backorder:
                 # Not all lines are fully done, ask the user to confirm the
@@ -973,18 +994,21 @@ class Reception(Component):
             return self._response_for_confirm_done(
                 picking, message=self.msg_store.need_confirmation()
             )
-        self._handle_backorder(picking)
+        self._handle_backorder(picking, cancel_backorder)
         return self._response_for_select_document(
             message=self.msg_store.transfer_done_success(picking)
         )
 
-    def _handle_backorder(self, picking):
+    def _handle_backorder(self, picking, cancel_backorder=False):
         """This method handles backorders that could be created at picking confirm."""
+        if cancel_backorder:
+            picking = picking.with_context(cancel_backorder=True)
         backorders_before = picking.backorder_ids
         picking._action_done()
-        backorders_after = picking.backorder_ids - backorders_before
-        # Remove user_id on the backorder, if any
-        backorders_after.user_id = False
+        if not cancel_backorder:
+            backorders_after = picking.backorder_ids - backorders_before
+            # Remove user_id on backorder, if any
+            backorders_after.user_id = False
 
     def set_lot(
         self, picking_id, selected_line_id, lot_name=None, expiration_date=None
@@ -1043,7 +1067,7 @@ class Reception(Component):
         message = self._check_expiry_date(selected_line)
         if message:
             return self._response_for_set_lot(picking, selected_line, message=message)
-        return self._response_for_set_quantity(picking, selected_line)
+        return self._before_state__set_quantity(picking, selected_line)
 
     def _check_expiry_date(self, line):
         use_expiration_date = (
@@ -1062,7 +1086,7 @@ class Reception(Component):
         }
 
     def _set_quantity__by_barcode(
-        self, picking, selected_line, barcode, confirmation=False
+        self, picking, selected_line, barcode, confirmation=None
     ):
         handlers_by_type = self._set_quantity__get_handlers_by_type()
         search = self._actions_for("search")
@@ -1072,12 +1096,12 @@ class Reception(Component):
             return handler(picking, selected_line, search_result.record)
         # Nothing found, ask user if we should create a new pack for the scanned
         # barcode
-        if not confirmation:
+        if confirmation != barcode:
             return self._response_for_set_quantity(
                 picking,
                 selected_line,
                 message=self.msg_store.create_new_pack_ask_confirmation(barcode),
-                asking_confirmation=True,
+                asking_confirmation=barcode,
             )
         package = self.env["stock.quant.package"].create({"name": barcode})
         selected_line.result_package_id = package
@@ -1102,7 +1126,7 @@ class Reception(Component):
         selected_line_id,
         quantity=None,
         barcode=None,
-        confirmation=False,
+        confirmation=None,
     ):
         """Set the quantity done
 
@@ -1146,6 +1170,22 @@ class Reception(Component):
                 picking, selected_line, barcode, confirmation
             )
         return self._response_for_set_quantity(picking, selected_line)
+
+    def set_quantity__cancel_action(self, picking_id, selected_line_id):
+        picking = self.env["stock.picking"].browse(picking_id)
+        selected_line = self.env["stock.move.line"].browse(selected_line_id)
+        message = self._check_picking_status(picking)
+        if message:
+            return self._response_for_set_quantity(
+                picking, selected_line, message=message
+            )
+        if selected_line.exists():
+            if selected_line.product_uom_qty:
+                stock = self._actions_for("stock")
+                stock.unmark_move_line_as_picked(selected_line)
+            else:
+                selected_line.unlink()
+        return self._response_for_select_move(picking)
 
     def _set_quantity__process__set_qty_and_split(self, picking, line, quantity):
         move = line.move_id
@@ -1216,6 +1256,7 @@ class Reception(Component):
         return self._response_for_set_destination(picking, selected_line)
 
     def _post_line(self, selected_line):
+        selected_line.product_uom_qty = selected_line.qty_done
         if (
             selected_line.picking_id.is_shopfloor_created
             and self.work.menu.allow_return
@@ -1237,15 +1278,48 @@ class Reception(Component):
         )
 
     def _auto_post_line(self, selected_line):
-        new_move = selected_line.move_id.split_other_move_lines(
-            selected_line, intersection=True
+        # If user only processed 1/5 and is the only one working on the move,
+        # then selected_line is the only one related to this move.
+        # In such case, we must ensure there's another move with the remaining
+        # quantity to do, so selected_line is extracted in a new move as expected.
+
+        # Always keep the quantity todo at zero, the same is done
+        # in Odoo when move lines are created manually (setting)
+        lines_with_qty_todo = selected_line.move_id.move_line_ids.filtered(
+            lambda line: line.state not in ("cancel", "done")
+            and line.product_uom_qty > 0
         )
-        if new_move:
-            # A new move is created in case of partial quantity
-            new_move.extract_and_action_done()
-            return
-        # In case of full quantity, post the initial move
-        selected_line.move_id.extract_and_action_done()
+        move = selected_line.move_id
+        lock = self._actions_for("lock")
+        lock.for_update(move)
+        if lines_with_qty_todo:
+            lines_with_qty_todo.product_uom_qty = 0
+
+        move_quantity = move.product_uom._compute_quantity(
+            move.product_uom_qty, selected_line.product_uom_id
+        )
+        if selected_line.qty_done == move_quantity:
+            # In case of full quantity, post the initial move
+            return selected_line.move_id.extract_and_action_done()
+        split_move_vals = move._split(selected_line.qty_done)
+        new_move = move.create(split_move_vals)
+        new_move.move_line_ids = selected_line
+        new_move._action_confirm(merge=False)
+        new_move._recompute_state()
+        new_move._action_assign()
+        # Set back the quantity to do on one of the lines
+        line = fields.first(
+            move.move_line_ids.filtered(
+                lambda line: line.state not in ("cancel", "done")
+            )
+        )
+        if line:
+            move_quantity = move.product_uom._compute_quantity(
+                move.product_uom_qty, line[0].product_uom_id
+            )
+            line.product_uom_qty = move_quantity
+        move._recompute_state()
+        new_move.extract_and_action_done()
 
     def set_destination(
         self, picking_id, selected_line_id, location_name, confirmation=False
@@ -1355,7 +1429,6 @@ class Reception(Component):
                 return response
             return self._response_for_select_move(picking)
         message = self.msg_store.create_new_pack_ask_confirmation(barcode)
-        self._assign_user_to_picking(picking)
         return self._response_for_confirm_new_package(
             picking, selected_line, new_package_name=barcode, message=message
         )
@@ -1408,7 +1481,17 @@ class ShopfloorReceptionValidator(Component):
             },
             "quantity": {"type": "float"},
             "barcode": {"type": "string"},
-            "confirmation": {"type": "boolean"},
+            "confirmation": {"type": "string", "nullable": True},
+        }
+
+    def set_quantity__cancel_action(self):
+        return {
+            "picking_id": {"coerce": to_int, "required": True, "type": "integer"},
+            "selected_line_id": {
+                "coerce": to_int,
+                "type": "integer",
+                "required": True,
+            },
         }
 
     def process_with_existing_pack(self):
@@ -1542,6 +1625,9 @@ class ShopfloorReceptionValidatorResponse(Component):
     def _set_quantity_next_states(self):
         return {"set_quantity", "select_move", "set_destination"}
 
+    def _set_quantity__cancel_action_next_states(self):
+        return {"set_quantity", "select_move"}
+
     def _set_destination_next_states(self):
         return {"set_destination", "select_move"}
 
@@ -1616,10 +1702,20 @@ class ShopfloorReceptionValidatorResponse(Component):
             },
             "picking": {"type": "dict", "schema": self.schemas.picking()},
             "confirmation_required": {
-                "type": "boolean",
+                "type": "string",
                 "nullable": True,
                 "required": False,
             },
+        }
+
+    @property
+    def _schema_set_quantity__cancel_action(self):
+        return {
+            "selected_move_line": {
+                "type": "list",
+                "schema": {"type": "dict", "schema": self.schemas.move_line()},
+            },
+            "picking": {"type": "dict", "schema": self.schemas.picking()},
         }
 
     @property
@@ -1698,6 +1794,11 @@ class ShopfloorReceptionValidatorResponse(Component):
 
     def set_quantity(self):
         return self._response_schema(next_states=self._set_quantity_next_states())
+
+    def set_quantity__cancel_action(self):
+        return self._response_schema(
+            next_states=self._set_quantity__cancel_action_next_states()
+        )
 
     def process_with_existing_pack(self):
         return self._response_schema(

@@ -80,7 +80,7 @@ class LocationContentTransfer(Component):
         )
 
     def _response_for_scan_destination_all(
-        self, pickings, message=None, confirmation_required=False
+        self, pickings, message=None, confirmation_required=None, package=None
     ):
         """Transition to the 'scan_destination_all' state
 
@@ -92,6 +92,8 @@ class LocationContentTransfer(Component):
         """
         data = self._data_content_all_for_location(pickings=pickings)
         data["confirmation_required"] = confirmation_required
+        if package:
+            data["package"] = self.data.package(package)
         if confirmation_required and not message:
             message = self.msg_store.need_confirmation()
         return self._response(
@@ -116,7 +118,12 @@ class LocationContentTransfer(Component):
         )
 
     def _response_for_scan_destination(
-        self, location, next_content, message=None, confirmation_required=False
+        self,
+        location,
+        next_content,
+        message=None,
+        confirmation_required=None,
+        package=None,
     ):
         """Transition to the 'scan_destination' state
 
@@ -124,6 +131,8 @@ class LocationContentTransfer(Component):
         """
         data = self._data_content_line_for_location(location, next_content)
         data["confirmation_required"] = confirmation_required
+        if package:
+            data["package"] = self.data.package(package)
         if confirmation_required and not message:
             message = self.msg_store.need_confirmation()
         return self._response(next_state="scan_destination", data=data, message=message)
@@ -448,12 +457,19 @@ class LocationContentTransfer(Component):
         return lines
 
     # hook used in module shopfloor_checkout_sync
-    def _write_destination_on_lines(self, lines, location):
+    def _write_destination_on_lines(self, lines, location, package=None):
         lines.location_dest_id = location
         lines.package_level_id.location_dest_id = location
+        if package:
+            lines.result_package_id = package
 
-    def _set_all_destination_lines_and_done(self, pickings, move_lines, dest_location):
-        self._write_destination_on_lines(move_lines, dest_location)
+    def _set_all_destination_lines_and_done(
+        self, pickings, move_lines, dest_location, package=None
+    ):
+        if package and not package.location_id:
+            # Using an empty package
+            package.location_id = dest_location
+        self._write_destination_on_lines(move_lines, dest_location, package)
         stock = self._actions_for("stock")
         stock.validate_moves(move_lines.move_id)
 
@@ -461,10 +477,87 @@ class LocationContentTransfer(Component):
         """Lock move lines"""
         self._actions_for("lock").for_update(lines)
 
-    def set_destination_all(self, location_id, barcode, confirmation=False):
+    def _is_package_empty(self, package):
+        return not bool(package.quant_ids)
+
+    def _set_dest_get_empty_pack(self, package_id):
+        empty_package = self.env["stock.quant.package"]
+        if package_id:
+            empty_package = self.env["stock.quant.package"].browse(package_id).exists()
+        return empty_package
+
+    def _set_destination__by_location(self, location, move_ids, empty_package):
+        message = self._set_dest_validate_location(
+            move_ids, location, self.env["stock.quant.package"], empty_package
+        )
+        return self.env["stock.quant.package"], location, empty_package, message
+
+    def _set_destination__by_package(self, package, move_ids, empty_package):
+        message = None
+        message, empty_package = self._set_dest_handle_empty_package_scanned(
+            package, empty_package
+        )
+        if not message and empty_package:
+            message, empty_package = self._set_dest_handle_empty_package_used(
+                empty_package
+            )
+        return package, self.env["stock.location"], empty_package, message
+
+    def _set_destination__by_none(self, record, move_ids, empty_package):
+        return (
+            self.env["stock.quant.package"],
+            self.env["stock.location"],
+            empty_package,
+            self.msg_store.barcode_not_found(),
+        )
+
+    def _set_destination_handle_barcode(self, barcode, move_ids, empty_package):
+        search_types = ("location", "package")
+        search_result = self._actions_for("search").find(barcode, search_types)
+        result_handler = getattr(self, "_set_destination__by_" + search_result.type)
+        scan_package, scan_location, empty_package, message = result_handler(
+            search_result.record, move_ids, empty_package
+        )
+        return scan_location, scan_package, empty_package, message
+
+    def _set_dest_validate_location(self, move_ids, location, package, empty_package):
+        # Used by the module `shopfloor_location_content_transfer_force_package`
+        message = None
+        destination_location = location or package.location_id
+        if destination_location:
+            if not self.is_dest_location_valid(move_ids, destination_location):
+                message = self.msg_store.dest_location_not_allowed()
+        return message
+
+    def _set_dest_handle_empty_package_scanned(self, scanned_package, empty_package):
+        """Check if the scanned package is empty.
+
+        If it is, the user will be asked to scan a location.
+        """
+        message = None
+        if scanned_package and self._is_package_empty(scanned_package):
+            empty_package = scanned_package
+            message = self.msg_store.package_selected_is_empty(scanned_package)
+        return message, empty_package
+
+    def _set_dest_handle_empty_package_used(self, empty_package):
+        """Using an empty package to move the goods to new location.
+
+        Check that the package can still be used
+        """
+        message = None
+        if empty_package:
+            if not self._is_package_empty(empty_package):
+                message = self.package_not_empty_anymore(empty_package)
+                empty_package = self.env["stock.quant.pacakge"]
+        return message, empty_package
+
+    def set_destination_all(
+        self, location_id, barcode, confirmation=None, package_id=None
+    ):
         """Scan destination location for all the moves of the location
 
-        barcode is a stock.location for the destination
+        barcode is a stock.location or a package in ta location for the destination
 
         Transitions:
         * scan_destination_all: invalid destination or could not set moves to done
@@ -476,34 +569,46 @@ class LocationContentTransfer(Component):
         move_lines = self._find_transfer_move_lines(location)
         pickings = move_lines.mapped("picking_id")
         if not pickings:
-            # if we can't find the lines anymore, they likely have been done
-            # by someone else
+            # Can't find the lines anymore, have likely been done by someone else
             return self._response_for_start(message=self.msg_store.already_done())
-        scanned_location = self._actions_for("search").location_from_scan(barcode)
-        if not scanned_location:
-            return self._response_for_scan_destination_all(
-                pickings, message=self.msg_store.barcode_not_found()
-            )
 
-        if not self.is_dest_location_valid(move_lines.move_id, scanned_location):
+        message = None
+        empty_package = self._set_dest_get_empty_pack(package_id)
+        (
+            scan_location,
+            scan_package,
+            empty_package,
+            message,
+        ) = self._set_destination_handle_barcode(
+            barcode, move_lines.move_id, empty_package
+        )
+        if message:
             return self._response_for_scan_destination_all(
-                pickings, message=self.msg_store.dest_location_not_allowed()
+                pickings,
+                message=message,
+                package=empty_package,
             )
-        if not confirmation and self.is_dest_location_to_confirm(
-            move_lines.location_dest_id, scanned_location
+        dest_location = scan_location or scan_package.location_id
+
+        if confirmation != barcode and self.is_dest_location_to_confirm(
+            move_lines.location_dest_id, dest_location
         ):
             return self._response_for_scan_destination_all(
-                pickings, confirmation_required=True
+                pickings, confirmation_required=barcode, package=empty_package
             )
         self._lock_lines(move_lines)
 
-        self._set_all_destination_lines_and_done(pickings, move_lines, scanned_location)
+        if empty_package and not scan_package:
+            scan_package = empty_package
+        self._set_all_destination_lines_and_done(
+            pickings, move_lines, dest_location, scan_package
+        )
 
         completion_info = self._actions_for("completion.info")
         completion_info_popup = completion_info.popup(move_lines)
         return self._response_for_start(
             message=self.msg_store.location_content_transfer_complete(
-                location, scanned_location
+                location, dest_location
             ),
             popup=completion_info_popup,
         )
@@ -663,9 +768,14 @@ class LocationContentTransfer(Component):
         )
 
     def set_destination_package(
-        self, location_id, package_level_id, barcode, confirmation=False
+        self,
+        location_id,
+        package_level_id,
+        barcode,
+        confirmation=None,
+        package_id=None,
     ):
-        """Scan destination location for package level
+        """Scan destination location or package for package level
 
         If the move has other move lines / package levels it has to be split
         so we can post only this part.
@@ -684,35 +794,48 @@ class LocationContentTransfer(Component):
         if not package_level.exists():
             move_lines = self._find_transfer_move_lines(location)
             return self._response_for_start_single(move_lines.mapped("picking_id"))
-        search = self._actions_for("search")
-        scanned_location = search.location_from_scan(barcode)
-        if not scanned_location:
-            return self._response_for_scan_destination(
-                location, package_level, message=self.msg_store.no_location_found()
-            )
+
+        empty_package = self._set_dest_get_empty_pack(package_id)
+        message = None
         package_moves = package_level.move_line_ids.move_id
-        if not self.is_dest_location_valid(package_moves, scanned_location):
+        (
+            scan_location,
+            scan_package,
+            empty_package,
+            message,
+        ) = self._set_destination_handle_barcode(barcode, package_moves, empty_package)
+        if message:
             return self._response_for_scan_destination(
                 location,
                 package_level,
-                message=self.msg_store.dest_location_not_allowed(),
+                message=message,
+                package=empty_package,
             )
-        if not confirmation and self.is_dest_location_to_confirm(
-            package_level.location_dest_id, scanned_location
+
+        dest_location = scan_location or scan_package.location_id
+        if confirmation != barcode and self.is_dest_location_to_confirm(
+            package_level.location_dest_id, dest_location
         ):
             return self._response_for_scan_destination(
-                location, package_level, confirmation_required=True
+                location,
+                package_level,
+                confirmation_required=barcode,
+                package=empty_package,
             )
         package_move_lines = package_level.move_line_ids
         self._lock_lines(package_move_lines)
         stock = self._actions_for("stock")
+
+        if empty_package and not scan_package:
+            scan_package = empty_package
+
         stock.put_package_level_in_move(package_level)
-        self._write_destination_on_lines(package_level.move_line_ids, scanned_location)
+        self._write_destination_on_lines(
+            package_level.move_line_ids, dest_location, package=scan_package
+        )
         stock.validate_moves(package_moves)
         move_lines = self._find_transfer_move_lines(location)
-        message = self.msg_store.location_content_transfer_item_complete(
-            scanned_location
-        )
+        message = self.msg_store.location_content_transfer_item_complete(dest_location)
         completion_info = self._actions_for("completion.info")
         completion_info_popup = completion_info.popup(package_moves.move_line_ids)
         return self._response_for_start_single(
@@ -722,9 +845,15 @@ class LocationContentTransfer(Component):
         )
 
     def set_destination_line(
-        self, location_id, move_line_id, quantity, barcode, confirmation=False
+        self,
+        location_id,
+        move_line_id,
+        quantity,
+        barcode,
+        confirmation=None,
+        package_id=None,
     ):
-        """Scan destination location for move line
+        """Scan destination location or package for move line
 
         If the quantity < qty of the line, split the move and reserve it.
         If the move has other move lines / package levels it has to be split
@@ -744,21 +873,33 @@ class LocationContentTransfer(Component):
         if not move_line.exists():
             move_lines = self._find_transfer_move_lines(location)
             return self._response_for_start_single(move_lines.mapped("picking_id"))
-        search = self._actions_for("search")
-        scanned_location = search.location_from_scan(barcode)
-        if not scanned_location:
+
+        empty_package = self._set_dest_get_empty_pack(package_id)
+        message = None
+        (
+            scan_location,
+            scan_package,
+            empty_package,
+            message,
+        ) = self._set_destination_handle_barcode(
+            barcode, move_line.move_id, empty_package
+        )
+        if message:
             return self._response_for_scan_destination(
-                location, move_line, message=self.msg_store.no_location_found()
+                location,
+                move_line,
+                message=message,
+                package=empty_package,
             )
-        if not self.is_dest_location_valid(move_line.move_id, scanned_location):
-            return self._response_for_scan_destination(
-                location, move_line, message=self.msg_store.dest_location_not_allowed()
-            )
-        if not confirmation and self.is_dest_location_to_confirm(
-            move_line.location_dest_id, scanned_location
+        dest_location = scan_location or scan_package.location_id
+        if confirmation != barcode and self.is_dest_location_to_confirm(
+            move_line.location_dest_id, dest_location
         ):
             return self._response_for_scan_destination(
-                location, move_line, confirmation_required=True
+                location,
+                move_line,
+                confirmation_required=barcode,
+                package=empty_package,
             )
 
         self._lock_lines(move_line)
@@ -768,13 +909,13 @@ class LocationContentTransfer(Component):
         move_line._extract_in_split_order({"user_id": self.env.uid})
         remaining_move_line.qty_done = remaining_move_line.product_uom_qty
 
-        self._write_destination_on_lines(move_line, scanned_location)
+        if empty_package and not scan_package:
+            scan_package = empty_package
+        self._write_destination_on_lines(move_line, dest_location, scan_package)
         stock = self._actions_for("stock")
         stock.validate_moves(move_line.move_id)
         move_lines = self._find_transfer_move_lines(location)
-        message = self.msg_store.location_content_transfer_item_complete(
-            scanned_location
-        )
+        message = self.msg_store.location_content_transfer_item_complete(dest_location)
         completion_info = self._actions_for("completion.info")
         completion_info_popup = completion_info.popup(move_line)
         return self._response_for_start_single(
@@ -828,9 +969,10 @@ class LocationContentTransfer(Component):
         splits the move to have no side-effect on the other package levels/move
         lines.
 
-        It unreserves the move, create an inventory at 0 in the move's source
-        location, create a second draft inventory (if none exists) to check later.
-        Finally, it cancels the move.
+        If the move has been created by the shopfloor user it will be canceled
+        otherwise it is unreserved.
+        Then create an inventory at 0 in the move's source location, create a
+        second draft inventory (if none exists) to check later.
 
         Transitions:
         * start: no more content to move
@@ -855,17 +997,23 @@ class LocationContentTransfer(Component):
             # We need to set qty_done at 0 because otherwise
             # the move_line will not be deleted
             package_move.move_line_ids.write({"qty_done": 0})
-            package_move._do_unreserve()
-            package_move._recompute_state()
+            package = package_level.package_id
+            if (
+                self.is_allow_move_create()
+                and self.env.user == package_move.picking_id.create_uid
+            ):
+                # Owned by the user deleting the move
+                package_move._action_cancel()
+            else:
+                # Not owned only unreserved
+                package_move._do_unreserve()
+                package_move._recompute_state()
             # Create an inventory at 0 in the move's source location
-            inventory.create_stock_issue(
-                package_move, location, package_level.package_id, lot
-            )
+            inventory.create_stock_issue(package_move, location, package, lot)
             # Create a draft inventory to control stock
             inventory.create_control_stock(
-                location, package_move.product_id, package_level.package_id, lot
+                location, package_move.product_id, package, lot
             )
-            package_move._action_cancel()
         # remove the package level (this is what does the `picking.do_unreserve()`
         # method, but here we want to unreserve+unlink this package alone)
         assert package_level.state == "draft", "Package level has to be in draft"
@@ -889,9 +1037,10 @@ class LocationContentTransfer(Component):
         splits the move to have no side-effect on the other package levels/move
         lines.
 
-        It unreserves the move, create an inventory at 0 in the move's source
-        location, create a second draft inventory (if none exists) to check later.
-        Finally, it cancels the move.
+        If the move has been created by the shopfloor user it will be canceled
+        otherwise it will be unreserved.
+        Then an inventory is created at 0 in the move's source location,
+        create a second draft inventory (if none exists) to check later.
 
         Transitions:
         * start: no more content to move
@@ -913,15 +1062,19 @@ class LocationContentTransfer(Component):
         # We need to set qty_done at 0 because otherwise
         # the move_line will not be deleted
         move_line.qty_done = 0
-        move._do_unreserve()
-        move._recompute_state()
+        if self.is_allow_move_create() and self.env.user == move.picking_id.create_uid:
+            # Owned by the user deleting the move
+            move._action_cancel()
+        else:
+            # Not owned unreserve
+            move._do_unreserve()
+            move._recompute_state()
         # Create an inventory at 0 in the move's source location
         inventory.create_stock_issue(move, move_line_src_location, package, lot)
         # Create a draft inventory to control stock
         inventory.create_control_stock(
             move_line_src_location, move.product_id, package, lot
         )
-        move._action_cancel()
         move_lines = self._find_transfer_move_lines(location)
         return self._response_for_start_single(move_lines.mapped("picking_id"))
 
@@ -983,7 +1136,8 @@ class ShopfloorLocationContentTransferValidator(Component):
         return {
             "location_id": {"coerce": to_int, "required": True, "type": "integer"},
             "barcode": {"required": True, "type": "string"},
-            "confirmation": {"type": "boolean", "nullable": True, "required": False},
+            "confirmation": {"type": "string", "nullable": True, "required": False},
+            "package_id": {"coerce": to_int, "required": False, "type": "integer"},
         }
 
     def go_to_single(self):
@@ -1008,7 +1162,8 @@ class ShopfloorLocationContentTransferValidator(Component):
             "location_id": {"coerce": to_int, "required": True, "type": "integer"},
             "package_level_id": {"coerce": to_int, "required": True, "type": "integer"},
             "barcode": {"required": True, "type": "string"},
-            "confirmation": {"type": "boolean", "nullable": True, "required": False},
+            "confirmation": {"type": "string", "nullable": True, "required": False},
+            "package_id": {"coerce": to_int, "required": False, "type": "integer"},
         }
 
     def set_destination_line(self):
@@ -1017,7 +1172,8 @@ class ShopfloorLocationContentTransferValidator(Component):
             "move_line_id": {"coerce": to_int, "required": True, "type": "integer"},
             "quantity": {"coerce": to_float, "required": True, "type": "float"},
             "barcode": {"required": True, "type": "string"},
-            "confirmation": {"type": "boolean", "nullable": True, "required": False},
+            "confirmation": {"type": "string", "nullable": True, "required": False},
+            "package_id": {"coerce": to_int, "required": False, "type": "integer"},
         }
 
     def postpone_package(self):
@@ -1084,10 +1240,13 @@ class ShopfloorLocationContentTransferValidatorResponse(Component):
             "package_levels": self.schemas._schema_list_of(package_level_schema),
             "move_lines": self.schemas._schema_list_of(move_line_schema),
             "confirmation_required": {
-                "type": "boolean",
+                "type": "string",
                 "nullable": True,
                 "required": False,
             },
+            "package": self.schemas._schema_dict_of(
+                self.schemas.package(), required=False
+            ),
         }
 
     @property
@@ -1099,10 +1258,13 @@ class ShopfloorLocationContentTransferValidatorResponse(Component):
             "package_level": self.schemas._schema_dict_of(schema_package_level),
             "move_line": self.schemas._schema_dict_of(schema_move_line),
             "confirmation_required": {
-                "type": "boolean",
+                "type": "string",
                 "nullable": True,
                 "required": False,
             },
+            "package": self.schemas._schema_dict_of(
+                self.schemas.package(), required=False
+            ),
         }
 
     def start_or_recover(self):

@@ -54,18 +54,22 @@ class TestAvailableToPromiseRelease(PromiseReleaseCommonCase):
         )
         self.assertEqual(self.picking.move_lines.state, "cancel")
         self.assertEqual(self.picking.state, "cancel")
+        self.assertFalse(self.picking.last_release_date)
 
     def test_unrelease_full(self):
         """Unrelease all moves of a released ship. The pick should be deleted and
         the moves should be mark as to release"""
         with self._assert_full_unreleased():
             self.shipping.move_lines.unrelease()
-
+        self.assertFalse(self.shipping.last_release_date)
         # I can release again the move and a new pick is created
         self.shipping.release_available_to_promise()
         new_picking = self._prev_picking(self.shipping) - self.picking
         self.assertTrue(new_picking)
         self.assertEqual(new_picking.state, "assigned")
+        self.assertTrue(
+            all(m.procure_method == "make_to_order" for m in self.shipping.move_lines)
+        )
 
     def test_unrelease_partially_processed_move(self):
         """Check it's not possible to unrelease a move that has been partially
@@ -127,6 +131,9 @@ class TestAvailableToPromiseRelease(PromiseReleaseCommonCase):
             backorder_ship.move_lines.move_orig_ids.filtered(
                 lambda m: m.state not in ("cancel", "done")
             )
+        )
+        self.assertTrue(
+            all(m.procure_method == "make_to_order" for m in backorder_ship.move_lines)
         )
 
     def test_unrelease_picking_wizard(self):

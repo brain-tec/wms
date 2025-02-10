@@ -53,7 +53,8 @@ class CheckoutCommonCase(CommonCase):
             "picking": self._stock_picking_data(picking),
             "group_lines_by_location": True,
             "show_oneline_package_content": False,
-            "need_confirm_pack_all": False,
+            "need_confirm_pack_all": "",
+            "need_confirm_lot": None,
         }
         data.update(kw)
         return data
@@ -69,6 +70,7 @@ class CheckoutCommonCase(CommonCase):
                 "picking": self._picking_summary_data(picking),
                 "packing_info": "",
                 "no_package_enabled": True,
+                "package_allowed": True,
             },
             message={
                 "message_type": "warning",
